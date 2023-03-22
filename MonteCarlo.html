@@ -1600,13 +1600,17 @@ mjx-stretchy-v mjx-c, mjx-stretchy-h mjx-c {
   font-family: MJXTEX-VB;
   src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff") format("woff");
 }
-</style><style type="text/css">.output_88a9b27bca7d47ecb98b25766a75b3f3 .sagecell_messages, .output_88a9b27bca7d47ecb98b25766a75b3f3 .sagecell_permalink {display: none;}</style><style type="text/css">.output_4743c3cfe735415c8725055e5d85339b .sagecell_messages, .output_4743c3cfe735415c8725055e5d85339b .sagecell_permalink {display: none;}</style><style type="text/css">.output_8aa46df7e4d5413eadc4904112ce6309 .sagecell_messages, .output_8aa46df7e4d5413eadc4904112ce6309 .sagecell_permalink {display: none;}</style><style type="text/css">.output_93f24dca81db47cb8ece4cc3f0010e70 .sagecell_messages, .output_93f24dca81db47cb8ece4cc3f0010e70 .sagecell_permalink {display: none;}</style></head>
+</style><style type="text/css">.output_9cfad3c7486a40438acbcc35ce16fe13 .sagecell_messages, .output_9cfad3c7486a40438acbcc35ce16fe13 .sagecell_permalink {display: none;}</style><style type="text/css">.output_07834969ff4841038919ae5b3cd9a045 .sagecell_messages, .output_07834969ff4841038919ae5b3cd9a045 .sagecell_permalink {display: none;}</style><style type="text/css">.output_1a66cdb9f85f435fb4e32cf093058559 .sagecell_messages, .output_1a66cdb9f85f435fb4e32cf093058559 .sagecell_permalink {display: none;}</style><style type="text/css">.output_4b4b3bc757c9444f8653bcd20f45c096 .sagecell_messages, .output_4b4b3bc757c9444f8653bcd20f45c096 .sagecell_permalink {display: none;}</style></head>
 <body>
 <div id="main">
             
             
             
-            <div id="notebook-holder"><div class="nb-notebook"><div class="nb-worksheet"><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="4" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage">import random
+            <div id="notebook-holder"><div class="nb-notebook"><div class="nb-worksheet"><div class="nb-cell nb-markdown-cell"><p>This is a Monte Carlo simulation to estimate the area under the curve. We have better ways to estimate area undera curve (If you are interested, it is called quadrature. You would likely see this in a numerical analysis course)</p>
+<p>The idea here is that you have a function <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></span>. You are interested in the area of this function from <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mo>≤</mo><mi>x</mi><mo>≤</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">a \leq x \leq b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.77194em; vertical-align: -0.13597em;"></span><span class="mord mathnormal">a</span><span class="mspace" style="margin-right: 0.277778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right: 0.277778em;"></span></span><span class="base"><span class="strut" style="height: 0.77194em; vertical-align: -0.13597em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right: 0.277778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right: 0.277778em;"></span></span><span class="base"><span class="strut" style="height: 0.69444em; vertical-align: 0em;"></span><span class="mord mathnormal">b</span></span></span></span></span>. You also have a bound on this function, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.68333em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.10903em;">M</span></span></span></span></span>. You generate <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal">n</span></span></span></span></span> data points randomly with the <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal">x</span></span></span></span></span> value between <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal">a</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.69444em; vertical-align: 0em;"></span><span class="mord mathnormal">b</span></span></span></span></span> and the <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord mathnormal" style="margin-right: 0.03588em;">y</span></span></span></span></span> value between <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.64444em; vertical-align: 0em;"></span><span class="mord">0</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.68333em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.10903em;">M</span></span></span></span></span>. For each data point, if the data point is under the curve, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>&lt;</mo><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">y &lt; f(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.73354em; vertical-align: -0.19444em;"></span><span class="mord mathnormal" style="margin-right: 0.03588em;">y</span><span class="mspace" style="margin-right: 0.277778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right: 0.277778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></span>, then you add <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.64444em; vertical-align: 0em;"></span><span class="mord">1</span></span></span></span></span> to the counter. If it is not, you do nothing. </p>
+<p>In the end, the total number of data points under the curve over the total number of data points (<span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><mi>c</mi><mi>o</mi><mi>u</mi><mi>n</mi><mi>t</mi><mi>e</mi><mi>r</mi></mrow><mi>n</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{counter}{n}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.16956em; vertical-align: -0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.824556em;"><span class="" style="top: -2.655em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.394em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">c</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">u</span><span class="mord mathnormal mtight">n</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight" style="margin-right: 0.02778em;">r</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.345em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span>) is an estimation of the area. </p>
+</div><div class="nb-cell nb-markdown-cell"><p><img src="attachment:1280px-Monte_Carlo_Integral_Parabola.png" alt="1280px-Monte_Carlo_Integral_Parabola.png"></p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="4" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage">import random
 M = 2
 a = 0 
 b = 1
@@ -1623,7 +1627,7 @@ area = M*(b-a)*counter/n
 float(area)
 
 </code></pre></div><div class="nb-output" data-prompt-number="4" style="display: none;"><pre class="nb-text-output">0.3331</pre></div>
-  <div class="compute sagecell output_88a9b27bca7d47ecb98b25766a75b3f3" style="display: none;">
+  <div class="compute sagecell output_9cfad3c7486a40438acbcc35ce16fe13" style="display: none;">
 
 <div class="sagecell-templates hide"></div>
 <div class="sagecell_output_elements" style="display: none;">
@@ -1652,7 +1656,7 @@ area = M*(b-a)*counter/n
 float(area)
 </script>
   </div></div><div class="nb-cell nb-code-cell"><div class="nb-input" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage"></code></pre></div>
-  <div class="compute sagecell output_4743c3cfe735415c8725055e5d85339b" style="display: none;">
+  <div class="compute sagecell output_07834969ff4841038919ae5b3cd9a045" style="display: none;">
 
 <div class="sagecell-templates hide"></div>
 <div class="sagecell_output_elements" style="display: none;">
@@ -1666,28 +1670,8 @@ float(area)
   <div class="compute" style="display: none;">
     <script type="text/x-sage">
 </script>
-  </div></div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="21" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage">for i in range(1,20):
-    print(randint(0,1))</code></pre></div><div class="nb-output" data-prompt-number="21" style="display: none;"><pre class="nb-stdout">1
-1
-1
-0
-0
-1
-1
-1
-1
-0
-0
-0
-0
-1
-1
-0
-0
-1
-0
-</pre></div>
-  <div class="compute sagecell output_8aa46df7e4d5413eadc4904112ce6309" style="display: none;">
+  </div></div><div class="nb-cell nb-code-cell"><div class="nb-input" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage"></code></pre></div>
+  <div class="compute sagecell output_1a66cdb9f85f435fb4e32cf093058559" style="display: none;">
 
 <div class="sagecell-templates hide"></div>
 <div class="sagecell_output_elements" style="display: none;">
@@ -1699,11 +1683,10 @@ float(area)
     </div>
 </div></div>
   <div class="compute" style="display: none;">
-    <script type="text/x-sage">for i in range(1,20):
-    print(randint(0,1))
+    <script type="text/x-sage">
 </script>
   </div></div><div class="nb-cell nb-code-cell"><div class="nb-input" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage"></code></pre></div>
-  <div class="compute sagecell output_93f24dca81db47cb8ece4cc3f0010e70" style="display: none;">
+  <div class="compute sagecell output_4b4b3bc757c9444f8653bcd20f45c096" style="display: none;">
 
 <div class="sagecell-templates hide"></div>
 <div class="sagecell_output_elements" style="display: none;">
@@ -1729,7 +1712,7 @@ float(area)
   <script src="https://dahn-research.eu/nbplayer/nbplayerConfig.js"></script>
   <script src="https://dahn-research.eu/nbplayer/js/nbrunner.min.js"></script>
   <script>
-    playerConfig={"panes":"ExecRead","lang":"sage","linked":true,"eval":false,"hide":["fullScreen"],"execute":true,"showRead":true,"collapsable":false,"playerPath":"https://dahn-research.eu/nbplayer","name":"Monte Carlo (1)"};
+    playerConfig={"panes":"ExecRead","lang":"sage","linked":true,"eval":false,"hide":["fullScreen"],"execute":true,"showRead":true,"collapsable":false,"playerPath":"https://dahn-research.eu/nbplayer","name":"MonteCarlo"};
     playerMode={"showSage":true,"showNotebookInput":true,"showSageInput":true};
     makeMenu();
     localize();
