@@ -6,6 +6,9 @@
         <!-- Bootstrap CSS -->
         <meta name="viewport" content="initial-scale=1">
         <style>/* BASICS */
+		
+<link rel=”stylesheet” type=”text/css” href=”csvtable.css” title=”style” /> <script type=”text/javascript” src=”js/jquery-1.4.2.min.js”></script> <script type=”text/javascript” src=”js/jquery.csvToTable.js”></script> <script type=”text/javascript” src=”js/jquery.tablesorter.dev.js”></script>
+<script> $(function() { $.get(‘HeightWeight.csv’, function(data) { $(‘#CSVSource’).html(‘<pre>’ + data + ‘</pre>’); }); $(‘#CSVTable’).CSVToTable(‘HeightWeight.csv’, { loadingImage: ‘images/loading.gif’, startLine: 0 }); $.get(‘test.tsv’, function(data) { $(‘#TSVSource’).html(‘<pre>’ + data + ‘</pre>’); }); $(‘#TSVTable’).CSVToTable(‘test.tsv’, { loadingText: ‘Loading TSV Data…’, loadingImage: ‘images/loading.gif’, startLine: 0, separator: “\t” }); $(‘#CSVTable2’).CSVToTable(‘HeightWeight.csv’, { loadingImage: ‘images/loading.gif’, startLine: 1, headers: [‘Index’, ‘Height’, ‘Weight’] }).bind(“loadComplete”,function() { $(‘#CSVTable2’).find(‘TABLE’).tablesorter(); });; }); </script>
 
 .CodeMirror {
   /* Set height, width, borders, and global font properties here */
