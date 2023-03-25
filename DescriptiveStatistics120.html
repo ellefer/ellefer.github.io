@@ -1610,10 +1610,13 @@ mjx-stretchy-v mjx-c, mjx-stretchy-h mjx-c {
 	 <button onclick="window.location.href = 'https://ellefer.github.io/home120.html';">HOME</button>
 	<br>
 	<p><a href="HeightWeight.csv">DataFile</a></p>
- <form action="/action_page.php">
-  <input type="file" id="myFile" name="filename">
-  <input type="submit">
-</form>
+<span>
+  File Upload
+  <input 
+    type="file"
+    id="data" 
+    name="data"
+</span>
             
             <div id="notebook-holder"><div class="nb-notebook"><div class="nb-worksheet"><div class="nb-cell nb-markdown-cell"><p>We are going to learn how to compute some descriptive statistics on a data set in R. To begin, we need to load the data into R. If the data is stored in the same folder as your R file, you can upload it into R using the command: <code>read.csv</code>:</p>
 <p>HW is the name we are calling the data. We will use this refer to the data throughout the rest of the document. (you could call it whatever you want, but usually you name it something that you will remember and that reminds you what it's referring to). </p>
