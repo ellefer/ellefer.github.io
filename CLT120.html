@@ -1755,7 +1755,7 @@ ggplot<span class="token punctuation">(</span>data.frame<span class="token punct
     <script type="text/x-sage">n = 50
 m = 100
 expMeans <- replicate(m,mean(rexp(n,1)))
-ggplot(data.frame(expMeans), aes(x = expMeans)) + geom_histogram(binwidth = .001)
+ggplot(data.frame(expMeans), aes(x = expMeans)) + geom_histogram(binwidth = .1)
 </script>
   </div></div><div class="nb-cell nb-markdown-cell"><p>There's some blank space down here if you want to test this out with other distributions! Remember, the CLT is not picky about the distribution your samples came from. It says the sums of your samples or the means of your samples are normally distributed as long as the sample size, (<span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal">n</span></span></span></span></span>) is large enough!</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input" style="display: none;"><pre class=" language-r"><code class=" language-r" data-language="R"></code></pre></div>
