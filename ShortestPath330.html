@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <title>nbplayer — Jupyter Notebook Player</title>
+        <meta charset="utf-8">
+        <!-- Bootstrap CSS -->
+        <meta name="viewport" content="initial-scale=1">
+        <style>/* BASICS */
+
+.CodeMirror {
+  /* Set height, width, borders, and global font properties here */
+  font-family: monospace;
+  height: 300px;
+  color: black;
+  direction: ltr;
+}
+
+/* PADDING */
+
+.CodeMirror-lines {
+  padding: 4px 0; /* Vertical padding around content */
+}
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like {
+  padding: 0 4px; /* Horizontal padding of content */
+}
+
+.CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
+  background-color: white; /* The little square between H and V scrollbars */
+}
+
+/* GUTTER */
+
+.CodeMirror-gutters {
+  border-right: 1px solid #ddd;
+  background-color: #f7f7f7;
+  white-space: nowrap;
+}
+.CodeMirror-linenumbers {}
+.CodeMirror-linenumber {
+  padding: 0 3px 0 5px;
+  min-width: 20px;
+  text-align: right;
+  color: #999;
+  white-space: nowrap;
+}
+
+.CodeMirror-guttermarker { color: black; }
+.CodeMirror-guttermarker-subtle { color: #999; }
+
+/* CURSOR */
+
+.CodeMirror-cursor {
+  border-left: 1px solid black;
+  border-right: none;
+  width: 0;
+}
+/* Shown when moving in bi-directional text */
+.CodeMirror div.CodeMirror-secondarycursor {
+  border-left: 1px solid silver;
+}
+.cm-fat-cursor .CodeMirror-cursor {
+  width: auto;
+  border: 0 !important;
+  background: #7e7;
+}
+.cm-fat-cursor div.CodeMirror-cursors {
+  z-index: 1;
+}
+.cm-fat-cursor .CodeMirror-line::selection,
+.cm-fat-cursor .CodeMirror-line > span::selection, 
+.cm-fat-cursor .CodeMirror-line > span > span::selection { background: transparent; }
+.cm-fat-cursor .CodeMirror-line::-moz-selection,
+.cm-fat-cursor .CodeMirror-line > span::-moz-selection,
+.cm-fat-cursor .CodeMirror-line > span > span::-moz-selection { background: transparent; }
+.cm-fat-cursor { caret-color: transparent; }
+@-moz-keyframes blink {
+  0% {}
+  50% { background-color: transparent; }
+  100% {}
+}
+@-webkit-keyframes blink {
+  0% {}
+  50% { background-color: transparent; }
+  100% {}
+}
+@keyframes blink {
+  0% {}
+  50% { background-color: transparent; }
+  100% {}
+}
+
+/* Can style cursor different in overwrite (non-insert) mode */
+.CodeMirror-overwrite .CodeMirror-cursor {}
+
+.cm-tab { display: inline-block; text-decoration: inherit; }
+
+.CodeMirror-rulers {
+  position: absolute;
+  left: 0; right: 0; top: -50px; bottom: 0;
+  overflow: hidden;
+}
+.CodeMirror-ruler {
+  border-left: 1px solid #ccc;
+  top: 0; bottom: 0;
+  position: absolute;
+}
+
+/* DEFAULT THEME */
+
+.cm-s-default .cm-header {color: blue;}
+.cm-s-default .cm-quote {color: #090;}
+.cm-negative {color: #d44;}
+.cm-positive {color: #292;}
+.cm-header, .cm-strong {font-weight: bold;}
+.cm-em {font-style: italic;}
+.cm-link {text-decoration: underline;}
+.cm-strikethrough {text-decoration: line-through;}
+
+.cm-s-default .cm-keyword {color: #708;}
+.cm-s-default .cm-atom {color: #219;}
+.cm-s-default .cm-number {color: #164;}
+.cm-s-default .cm-def {color: #00f;}
+.cm-s-default .cm-variable,
+.cm-s-default .cm-punctuation,
+.cm-s-default .cm-property,
+.cm-s-default .cm-operator {}
+.cm-s-default .cm-variable-2 {color: #05a;}
+.cm-s-default .cm-variable-3, .cm-s-default .cm-type {color: #085;}
+.cm-s-default .cm-comment {color: #a50;}
+.cm-s-default .cm-string {color: #a11;}
+.cm-s-default .cm-string-2 {color: #f50;}
+.cm-s-default .cm-meta {color: #555;}
+.cm-s-default .cm-qualifier {color: #555;}
+.cm-s-default .cm-builtin {color: #30a;}
+.cm-s-default .cm-bracket {color: #997;}
+.cm-s-default .cm-tag {color: #170;}
+.cm-s-default .cm-attribute {color: #00c;}
+.cm-s-default .cm-hr {color: #999;}
+.cm-s-default .cm-link {color: #00c;}
+
+.cm-s-default .cm-error {color: #f00;}
+.cm-invalidchar {color: #f00;}
+
+.CodeMirror-composing { border-bottom: 2px solid; }
+
+/* Default styles for common addons */
+
+div.CodeMirror span.CodeMirror-matchingbracket {color: #0b0;}
+div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
+.CodeMirror-matchingtag { background: rgba(255, 150, 0, .3); }
+.CodeMirror-activeline-background {background: #e8f2ff;}
+
+/* STOP */
+
+/* The rest of this file contains styles related to the mechanics of
+   the editor. You probably shouldn't touch them. */
+
+.CodeMirror {
+  position: relative;
+  overflow: hidden;
+  background: white;
+}
+
+.CodeMirror-scroll {
+  overflow: scroll !important; /* Things will break if this is overridden */
+  /* 50px is the magic margin used to hide the element's real scrollbars */
+  /* See overflow: hidden in .CodeMirror */
+  margin-bottom: -50px; margin-right: -50px;
+  padding-bottom: 50px;
+  height: 100%;
+  outline: none; /* Prevent dragging from highlighting the element */
+  position: relative;
+  z-index: 0;
+}
+.CodeMirror-sizer {
+  position: relative;
+  border-right: 50px solid transparent;
+}
+
+/* The fake, visible scrollbars. Used to force redraw during scrolling
+   before actual scrolling happens, thus preventing shaking and
+   flickering artifacts. */
+.CodeMirror-vscrollbar, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
+  position: absolute;
+  z-index: 6;
+  display: none;
+  outline: none;
+}
+.CodeMirror-vscrollbar {
+  right: 0; top: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+.CodeMirror-hscrollbar {
+  bottom: 0; left: 0;
+  overflow-y: hidden;
+  overflow-x: scroll;
+}
+.CodeMirror-scrollbar-filler {
+  right: 0; bottom: 0;
+}
+.CodeMirror-gutter-filler {
+  left: 0; bottom: 0;
+}
+
+.CodeMirror-gutters {
+  position: absolute; left: 0; top: 0;
+  min-height: 100%;
+  z-index: 3;
+}
+.CodeMirror-gutter {
+  white-space: normal;
+  height: 100%;
+  display: inline-block;
+  vertical-align: top;
+  margin-bottom: -50px;
+}
+.CodeMirror-gutter-wrapper {
+  position: absolute;
+  z-index: 4;
+  background: none !important;
+  border: none !important;
+}
+.CodeMirror-gutter-background {
+  position: absolute;
+  top: 0; bottom: 0;
+  z-index: 4;
+}
+.CodeMirror-gutter-elt {
+  position: absolute;
+  cursor: default;
+  z-index: 4;
+}
+.CodeMirror-gutter-wrapper ::selection { background-color: transparent }
+.CodeMirror-gutter-wrapper ::-moz-selection { background-color: transparent }
+
+.CodeMirror-lines {
+  cursor: text;
+  min-height: 1px; /* prevents collapsing before first draw */
+}
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like {
+  /* Reset some styles that the rest of the page might have set */
+  -moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0;
+  border-width: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  margin: 0;
+  white-space: pre;
+  word-wrap: normal;
+  line-height: inherit;
+  color: inherit;
+  z-index: 2;
+  position: relative;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-variant-ligatures: contextual;
+  font-variant-ligatures: contextual;
+}
+.CodeMirror-wrap pre.CodeMirror-line,
+.CodeMirror-wrap pre.CodeMirror-line-like {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: normal;
+}
+
+.CodeMirror-linebackground {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  z-index: 0;
+}
+
+.CodeMirror-linewidget {
+  position: relative;
+  z-index: 2;
+  padding: 0.1px; /* Force widget margins to stay inside of the container */
+}
+
+.CodeMirror-widget {}
+
+.CodeMirror-rtl pre { direction: rtl; }
+
+.CodeMirror-code {
+  outline: none;
+}
+
+/* Force content-box sizing for the elements where we expect it */
+.CodeMirror-scroll,
+.CodeMirror-sizer,
+.CodeMirror-gutter,
+.CodeMirror-gutters,
+.CodeMirror-linenumber {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+.CodeMirror-measure {
+  position: absolute;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+.CodeMirror-cursor {
+  position: absolute;
+  pointer-events: none;
+}
+.CodeMirror-measure pre { position: static; }
+
+div.CodeMirror-cursors {
+  visibility: hidden;
+  position: relative;
+  z-index: 3;
+}
+div.CodeMirror-dragcursors {
+  visibility: visible;
+}
+
+.CodeMirror-focused div.CodeMirror-cursors {
+  visibility: visible;
+}
+
+.CodeMirror-selected { background: #d9d9d9; }
+.CodeMirror-focused .CodeMirror-selected { background: #d7d4f0; }
+.CodeMirror-crosshair { cursor: crosshair; }
+.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #d7d4f0; }
+.CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #d7d4f0; }
+
+.cm-searching {
+  background-color: #ffa;
+  background-color: rgba(255, 255, 0, .4);
+}
+
+/* Used to force a border model for a node */
+.cm-force-border { padding-right: .1px; }
+
+@media print {
+  /* Hide the cursor when printing */
+  .CodeMirror div.CodeMirror-cursors {
+    visibility: hidden;
+  }
+}
+
+/* See issue #2901 */
+.cm-tab-wrap-hack:after { content: ''; }
+
+/* Help users use markselection to safely style text background */
+span.CodeMirror-selectedtext { background: none; }
+
+
+.CodeMirror-fullscreen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  height: auto;
+  z-index: 9;
+}
+
+
+.CodeMirror-foldmarker {
+  color: blue;
+  text-shadow: #b9f 1px 1px 2px, #b9f -1px -1px 2px, #b9f 1px -1px 2px, #b9f -1px 1px 2px;
+  font-family: arial;
+  line-height: .3;
+  cursor: pointer;
+}
+.CodeMirror-foldgutter {
+  width: .7em;
+}
+.CodeMirror-foldgutter-open,
+.CodeMirror-foldgutter-folded {
+  cursor: pointer;
+}
+.CodeMirror-foldgutter-open:after {
+  content: "\25BE";
+}
+.CodeMirror-foldgutter-folded:after {
+  content: "\25B8";
+}
+
+
+.CodeMirror-hints {
+  position: absolute;
+  z-index: 10;
+  overflow: hidden;
+  list-style: none;
+
+  margin: 0;
+  padding: 2px;
+
+  -webkit-box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  -moz-box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  border-radius: 3px;
+  border: 1px solid silver;
+
+  background: white;
+  font-size: 90%;
+  font-family: monospace;
+
+  max-height: 20em;
+  overflow-y: auto;
+}
+
+.CodeMirror-hint {
+  margin: 0;
+  padding: 0 4px;
+  border-radius: 2px;
+  white-space: pre;
+  color: black;
+  cursor: pointer;
+}
+
+li.CodeMirror-hint-active {
+  background: #08f;
+  color: white;
+}
+
+
+/*! jQuery UI - v1.12.0 - 2016-07-08
+* http://jqueryui.com
+* Includes: core.css, accordion.css, autocomplete.css, menu.css, button.css, controlgroup.css, checkboxradio.css, datepicker.css, dialog.css, draggable.css, resizable.css, progressbar.css, selectable.css, selectmenu.css, slider.css, sortable.css, spinner.css, tabs.css, tooltip.css, theme.css
+* To view and modify this theme, visit http://jqueryui.com/themeroller/?ffDefault=Verdana%2CArial%2Csans-serif&fwDefault=normal&fsDefault=1.1em&cornerRadius=4px&bgColorHeader=cccccc&bgTextureHeader=highlight_soft&bgImgOpacityHeader=75&borderColorHeader=aaaaaa&fcHeader=222222&iconColorHeader=222222&bgColorContent=ffffff&bgTextureContent=flat&bgImgOpacityContent=75&borderColorContent=aaaaaa&fcContent=222222&iconColorContent=222222&bgColorDefault=e6e6e6&bgTextureDefault=glass&bgImgOpacityDefault=75&borderColorDefault=d3d3d3&fcDefault=555555&iconColorDefault=888888&bgColorHover=dadada&bgTextureHover=glass&bgImgOpacityHover=75&borderColorHover=999999&fcHover=212121&iconColorHover=454545&bgColorActive=ffffff&bgTextureActive=glass&bgImgOpacityActive=65&borderColorActive=aaaaaa&fcActive=212121&iconColorActive=454545&bgColorHighlight=fbf9ee&bgTextureHighlight=glass&bgImgOpacityHighlight=55&borderColorHighlight=fcefa1&fcHighlight=363636&iconColorHighlight=2e83ff&bgColorError=fef1ec&bgTextureError=glass&bgImgOpacityError=95&borderColorError=cd0a0a&fcError=cd0a0a&iconColorError=cd0a0a&bgColorOverlay=aaaaaa&bgTextureOverlay=flat&bgImgOpacityOverlay=0&opacityOverlay=30&bgColorShadow=aaaaaa&bgTextureShadow=flat&bgImgOpacityShadow=0&opacityShadow=30&thicknessShadow=8px&offsetTopShadow=-8px&offsetLeftShadow=-8px&cornerRadiusShadow=8px
+* Copyright jQuery Foundation and other contributors; Licensed MIT */
+
+.ui-helper-hidden{display:none}.ui-helper-hidden-accessible{border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px}.ui-helper-reset{margin:0;padding:0;border:0;outline:0;line-height:1.3;text-decoration:none;font-size:100%;list-style:none}.ui-helper-clearfix:before,.ui-helper-clearfix:after{content:"";display:table;border-collapse:collapse}.ui-helper-clearfix:after{clear:both}.ui-helper-zfix{width:100%;height:100%;top:0;left:0;position:absolute;opacity:0;filter:Alpha(Opacity=0)}.ui-front{z-index:100}.ui-state-disabled{cursor:default!important;pointer-events:none}.ui-icon{display:inline-block;vertical-align:middle;margin-top:-.25em;position:relative;text-indent:-99999px;overflow:hidden;background-repeat:no-repeat}.ui-widget-icon-block{left:50%;margin-left:-8px;display:block}.ui-widget-overlay{position:fixed;top:0;left:0;width:100%;height:100%}.ui-accordion .ui-accordion-header{display:block;cursor:pointer;position:relative;margin:2px 0 0 0;padding:.5em .5em .5em .7em;font-size:100%}.ui-accordion .ui-accordion-content{padding:1em 2.2em;border-top:0;overflow:auto}.ui-autocomplete{position:absolute;top:0;left:0;cursor:default}.ui-menu{list-style:none;padding:0;margin:0;display:block;outline:0}.ui-menu .ui-menu{position:absolute}.ui-menu .ui-menu-item{margin:0;cursor:pointer;list-style-image:url("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")}.ui-menu .ui-menu-item-wrapper{position:relative;padding:3px 1em 3px .4em}.ui-menu .ui-menu-divider{margin:5px 0;height:0;font-size:0;line-height:0;border-width:1px 0 0 0}.ui-menu .ui-state-focus,.ui-menu .ui-state-active{margin:-1px}.ui-menu-icons{position:relative}.ui-menu-icons .ui-menu-item-wrapper{padding-left:2em}.ui-menu .ui-icon{position:absolute;top:0;bottom:0;left:.2em;margin:auto 0}.ui-menu .ui-menu-icon{left:auto;right:0}.ui-button{padding:.4em 1em;display:inline-block;position:relative;line-height:normal;margin-right:.1em;cursor:pointer;vertical-align:middle;text-align:center;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;overflow:visible}.ui-button,.ui-button:link,.ui-button:visited,.ui-button:hover,.ui-button:active{text-decoration:none}.ui-button-icon-only{width:2em;box-sizing:border-box;text-indent:-9999px;white-space:nowrap}input.ui-button.ui-button-icon-only{text-indent:0}.ui-button-icon-only .ui-icon{position:absolute;top:50%;left:50%;margin-top:-8px;margin-left:-8px}.ui-button.ui-icon-notext .ui-icon{padding:0;width:2.1em;height:2.1em;text-indent:-9999px;white-space:nowrap}input.ui-button.ui-icon-notext .ui-icon{width:auto;height:auto;text-indent:0;white-space:normal;padding:.4em 1em}input.ui-button::-moz-focus-inner,button.ui-button::-moz-focus-inner{border:0;padding:0}.ui-controlgroup{vertical-align:middle;display:inline-block}.ui-controlgroup > .ui-controlgroup-item{float:left;margin-left:0;margin-right:0}.ui-controlgroup > .ui-controlgroup-item:focus,.ui-controlgroup > .ui-controlgroup-item.ui-visual-focus{z-index:9999}.ui-controlgroup-vertical > .ui-controlgroup-item{display:block;float:none;width:100%;margin-top:0;margin-bottom:0;text-align:left}.ui-controlgroup-vertical .ui-controlgroup-item{box-sizing:border-box}.ui-controlgroup .ui-controlgroup-label{padding:.4em 1em}.ui-controlgroup .ui-controlgroup-label span{font-size:80%}.ui-controlgroup-horizontal .ui-controlgroup-label + .ui-controlgroup-item{border-left:none}.ui-controlgroup-vertical .ui-controlgroup-label + .ui-controlgroup-item{border-top:none}.ui-controlgroup-horizontal .ui-controlgroup-label.ui-widget-content{border-right:none}.ui-controlgroup-vertical .ui-controlgroup-label.ui-widget-content{border-bottom:none}.ui-controlgroup-vertical .ui-spinner-input{width:75%;width:calc( 100% - 2.4em )}.ui-controlgroup-vertical .ui-spinner .ui-spinner-up{border-top-style:solid}.ui-checkboxradio-label .ui-icon-background{box-shadow:inset 1px 1px 1px #ccc;border-radius:.12em;border:none}.ui-checkboxradio-radio-label .ui-icon-background{width:16px;height:16px;border-radius:1em;overflow:visible;border:none}.ui-checkboxradio-radio-label.ui-checkboxradio-checked .ui-icon,.ui-checkboxradio-radio-label.ui-checkboxradio-checked:hover .ui-icon{background-image:none;width:8px;height:8px;border-width:4px;border-style:solid}.ui-checkboxradio-disabled{pointer-events:none}.ui-datepicker{width:17em;padding:.2em .2em 0;display:none}.ui-datepicker .ui-datepicker-header{position:relative;padding:.2em 0}.ui-datepicker .ui-datepicker-prev,.ui-datepicker .ui-datepicker-next{position:absolute;top:2px;width:1.8em;height:1.8em}.ui-datepicker .ui-datepicker-prev-hover,.ui-datepicker .ui-datepicker-next-hover{top:1px}.ui-datepicker .ui-datepicker-prev{left:2px}.ui-datepicker .ui-datepicker-next{right:2px}.ui-datepicker .ui-datepicker-prev-hover{left:1px}.ui-datepicker .ui-datepicker-next-hover{right:1px}.ui-datepicker .ui-datepicker-prev span,.ui-datepicker .ui-datepicker-next span{display:block;position:absolute;left:50%;margin-left:-8px;top:50%;margin-top:-8px}.ui-datepicker .ui-datepicker-title{margin:0 2.3em;line-height:1.8em;text-align:center}.ui-datepicker .ui-datepicker-title select{font-size:1em;margin:1px 0}.ui-datepicker select.ui-datepicker-month,.ui-datepicker select.ui-datepicker-year{width:45%}.ui-datepicker table{width:100%;font-size:.9em;border-collapse:collapse;margin:0 0 .4em}.ui-datepicker th{padding:.7em .3em;text-align:center;font-weight:bold;border:0}.ui-datepicker td{border:0;padding:1px}.ui-datepicker td span,.ui-datepicker td a{display:block;padding:.2em;text-align:right;text-decoration:none}.ui-datepicker .ui-datepicker-buttonpane{background-image:none;margin:.7em 0 0 0;padding:0 .2em;border-left:0;border-right:0;border-bottom:0}.ui-datepicker .ui-datepicker-buttonpane button{float:right;margin:.5em .2em .4em;cursor:pointer;padding:.2em .6em .3em .6em;width:auto;overflow:visible}.ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current{float:left}.ui-datepicker.ui-datepicker-multi{width:auto}.ui-datepicker-multi .ui-datepicker-group{float:left}.ui-datepicker-multi .ui-datepicker-group table{width:95%;margin:0 auto .4em}.ui-datepicker-multi-2 .ui-datepicker-group{width:50%}.ui-datepicker-multi-3 .ui-datepicker-group{width:33.3%}.ui-datepicker-multi-4 .ui-datepicker-group{width:25%}.ui-datepicker-multi .ui-datepicker-group-last .ui-datepicker-header,.ui-datepicker-multi .ui-datepicker-group-middle .ui-datepicker-header{border-left-width:0}.ui-datepicker-multi .ui-datepicker-buttonpane{clear:left}.ui-datepicker-row-break{clear:both;width:100%;font-size:0}.ui-datepicker-rtl{direction:rtl}.ui-datepicker-rtl .ui-datepicker-prev{right:2px;left:auto}.ui-datepicker-rtl .ui-datepicker-next{left:2px;right:auto}.ui-datepicker-rtl .ui-datepicker-prev:hover{right:1px;left:auto}.ui-datepicker-rtl .ui-datepicker-next:hover{left:1px;right:auto}.ui-datepicker-rtl .ui-datepicker-buttonpane{clear:right}.ui-datepicker-rtl .ui-datepicker-buttonpane button{float:left}.ui-datepicker-rtl .ui-datepicker-buttonpane button.ui-datepicker-current,.ui-datepicker-rtl .ui-datepicker-group{float:right}.ui-datepicker-rtl .ui-datepicker-group-last .ui-datepicker-header,.ui-datepicker-rtl .ui-datepicker-group-middle .ui-datepicker-header{border-right-width:0;border-left-width:1px}.ui-datepicker .ui-icon{display:block;text-indent:-99999px;overflow:hidden;background-repeat:no-repeat;left:.5em;top:.3em}.ui-dialog{position:absolute;top:0;left:0;padding:.2em;outline:0}.ui-dialog .ui-dialog-titlebar{padding:.4em 1em;position:relative}.ui-dialog .ui-dialog-title{float:left;margin:.1em 0;white-space:nowrap;width:90%;overflow:hidden;text-overflow:ellipsis}.ui-dialog .ui-dialog-titlebar-close{position:absolute;right:.3em;top:50%;width:20px;margin:-10px 0 0 0;padding:1px;height:20px}.ui-dialog .ui-dialog-content{position:relative;border:0;padding:.5em 1em;background:none;overflow:auto}.ui-dialog .ui-dialog-buttonpane{text-align:left;border-width:1px 0 0 0;background-image:none;margin-top:.5em;padding:.3em 1em .5em .4em}.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset{float:right}.ui-dialog .ui-dialog-buttonpane button{margin:.5em .4em .5em 0;cursor:pointer}.ui-dialog .ui-resizable-n{height:2px;top:0}.ui-dialog .ui-resizable-e{width:2px;right:0}.ui-dialog .ui-resizable-s{height:2px;bottom:0}.ui-dialog .ui-resizable-w{width:2px;left:0}.ui-dialog .ui-resizable-se,.ui-dialog .ui-resizable-sw,.ui-dialog .ui-resizable-ne,.ui-dialog .ui-resizable-nw{width:7px;height:7px}.ui-dialog .ui-resizable-se{right:0;bottom:0}.ui-dialog .ui-resizable-sw{left:0;bottom:0}.ui-dialog .ui-resizable-ne{right:0;top:0}.ui-dialog .ui-resizable-nw{left:0;top:0}.ui-draggable .ui-dialog-titlebar{cursor:move}.ui-draggable-handle{-ms-touch-action:none;touch-action:none}.ui-resizable{position:relative}.ui-resizable-handle{position:absolute;font-size:0.1px;display:block;-ms-touch-action:none;touch-action:none}.ui-resizable-disabled .ui-resizable-handle,.ui-resizable-autohide .ui-resizable-handle{display:none}.ui-resizable-n{cursor:n-resize;height:7px;width:100%;top:-5px;left:0}.ui-resizable-s{cursor:s-resize;height:7px;width:100%;bottom:-5px;left:0}.ui-resizable-e{cursor:e-resize;width:7px;right:-5px;top:0;height:100%}.ui-resizable-w{cursor:w-resize;width:7px;left:-5px;top:0;height:100%}.ui-resizable-se{cursor:se-resize;width:12px;height:12px;right:1px;bottom:1px}.ui-resizable-sw{cursor:sw-resize;width:9px;height:9px;left:-5px;bottom:-5px}.ui-resizable-nw{cursor:nw-resize;width:9px;height:9px;left:-5px;top:-5px}.ui-resizable-ne{cursor:ne-resize;width:9px;height:9px;right:-5px;top:-5px}.ui-progressbar{height:2em;text-align:left;overflow:hidden}.ui-progressbar .ui-progressbar-value{margin:-1px;height:100%}.ui-progressbar .ui-progressbar-overlay{background:url("data:image/gif;base64,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");height:100%;filter:alpha(opacity=25);opacity:0.25}.ui-progressbar-indeterminate .ui-progressbar-value{background-image:none}.ui-selectable{-ms-touch-action:none;touch-action:none}.ui-selectable-helper{position:absolute;z-index:100;border:1px dotted black}.ui-selectmenu-menu{padding:0;margin:0;position:absolute;top:0;left:0;display:none}.ui-selectmenu-menu .ui-menu{overflow:auto;overflow-x:hidden;padding-bottom:1px}.ui-selectmenu-menu .ui-menu .ui-selectmenu-optgroup{font-size:1em;font-weight:bold;line-height:1.5;padding:2px 0.4em;margin:0.5em 0 0 0;height:auto;border:0}.ui-selectmenu-open{display:block}.ui-selectmenu-text{display:block;margin-right:20px;overflow:hidden;text-overflow:ellipsis}.ui-selectmenu-button.ui-button{text-align:left;white-space:nowrap;width:14em}.ui-selectmenu-icon.ui-icon{float:right;margin-top:0}.ui-slider{position:relative;text-align:left}.ui-slider .ui-slider-handle{position:absolute;z-index:2;width:1.2em;height:1.2em;cursor:default;-ms-touch-action:none;touch-action:none}.ui-slider .ui-slider-range{position:absolute;z-index:1;font-size:.7em;display:block;border:0;background-position:0 0}.ui-slider.ui-state-disabled .ui-slider-handle,.ui-slider.ui-state-disabled .ui-slider-range{filter:inherit}.ui-slider-horizontal{height:.8em}.ui-slider-horizontal .ui-slider-handle{top:-.3em;margin-left:-.6em}.ui-slider-horizontal .ui-slider-range{top:0;height:100%}.ui-slider-horizontal .ui-slider-range-min{left:0}.ui-slider-horizontal .ui-slider-range-max{right:0}.ui-slider-vertical{width:.8em;height:100px}.ui-slider-vertical .ui-slider-handle{left:-.3em;margin-left:0;margin-bottom:-.6em}.ui-slider-vertical .ui-slider-range{left:0;width:100%}.ui-slider-vertical .ui-slider-range-min{bottom:0}.ui-slider-vertical .ui-slider-range-max{top:0}.ui-sortable-handle{-ms-touch-action:none;touch-action:none}.ui-spinner{position:relative;display:inline-block;overflow:hidden;padding:0;vertical-align:middle}.ui-spinner-input{border:none;background:none;color:inherit;padding:.222em 0;margin:.2em 0;vertical-align:middle;margin-left:.4em;margin-right:2em}.ui-spinner-button{width:1.6em;height:50%;font-size:.5em;padding:0;margin:0;text-align:center;position:absolute;cursor:default;display:block;overflow:hidden;right:0}.ui-spinner a.ui-spinner-button{border-top-style:none;border-bottom-style:none;border-right-style:none}.ui-spinner-up{top:0}.ui-spinner-down{bottom:0}.ui-tabs{position:relative;padding:.2em}.ui-tabs .ui-tabs-nav{margin:0;padding:.2em .2em 0}.ui-tabs .ui-tabs-nav li{list-style:none;float:left;position:relative;top:0;margin:1px .2em 0 0;border-bottom-width:0;padding:0;white-space:nowrap}.ui-tabs .ui-tabs-nav .ui-tabs-anchor{float:left;padding:.5em 1em;text-decoration:none}.ui-tabs .ui-tabs-nav li.ui-tabs-active{margin-bottom:-1px;padding-bottom:1px}.ui-tabs .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor,.ui-tabs .ui-tabs-nav li.ui-state-disabled .ui-tabs-anchor,.ui-tabs .ui-tabs-nav li.ui-tabs-loading .ui-tabs-anchor{cursor:text}.ui-tabs-collapsible .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor{cursor:pointer}.ui-tabs .ui-tabs-panel{display:block;border-width:0;padding:1em 1.4em;background:none}.ui-tooltip{padding:8px;position:absolute;z-index:9999;max-width:300px}body .ui-tooltip{border-width:2px}.ui-widget{font-family:Verdana,Arial,sans-serif;font-size:1.1em}.ui-widget .ui-widget{font-size:1em}.ui-widget input,.ui-widget select,.ui-widget textarea,.ui-widget button{font-family:Verdana,Arial,sans-serif;font-size:1em}.ui-widget.ui-widget-content{border:1px solid #d3d3d3}.ui-widget-content{border:1px solid #aaa;background:#fff;color:#222}.ui-widget-content a{color:#222}.ui-widget-header{border:1px solid #aaa;background:#ccc url("https://sagecell.sagemath.org/static/images/ui-bg_highlight-soft_75_cccccc_1x100.png") 50% 50% repeat-x;color:#222;font-weight:bold}.ui-widget-header a{color:#222}.ui-state-default,.ui-widget-content .ui-state-default,.ui-widget-header .ui-state-default,.ui-button,html .ui-button.ui-state-disabled:hover,html .ui-button.ui-state-disabled:active{border:1px solid #d3d3d3;background:#e6e6e6 url("https://sagecell.sagemath.org/static/images/ui-bg_glass_75_e6e6e6_1x400.png") 50% 50% repeat-x;font-weight:normal;color:#555}.ui-state-default a,.ui-state-default a:link,.ui-state-default a:visited,a.ui-button,a:link.ui-button,a:visited.ui-button,.ui-button{color:#555;text-decoration:none}.ui-state-hover,.ui-widget-content .ui-state-hover,.ui-widget-header .ui-state-hover,.ui-state-focus,.ui-widget-content .ui-state-focus,.ui-widget-header .ui-state-focus,.ui-button:hover,.ui-button:focus{border:1px solid #999;background:#dadada url("https://sagecell.sagemath.org/static/images/ui-bg_glass_75_dadada_1x400.png") 50% 50% repeat-x;font-weight:normal;color:#212121}.ui-state-hover a,.ui-state-hover a:hover,.ui-state-hover a:link,.ui-state-hover a:visited,.ui-state-focus a,.ui-state-focus a:hover,.ui-state-focus a:link,.ui-state-focus a:visited,a.ui-button:hover,a.ui-button:focus{color:#212121;text-decoration:none}.ui-visual-focus{box-shadow:0 0 3px 1px rgb(94,158,214)}.ui-state-active,.ui-widget-content .ui-state-active,.ui-widget-header .ui-state-active,a.ui-button:active,.ui-button:active,.ui-button.ui-state-active:hover{border:1px solid #aaa;background:#fff url("https://sagecell.sagemath.org/static/images/ui-bg_glass_65_ffffff_1x400.png") 50% 50% repeat-x;font-weight:normal;color:#212121}.ui-icon-background,.ui-state-active .ui-icon-background{border:#aaa;background-color:#212121}.ui-state-active a,.ui-state-active a:link,.ui-state-active a:visited{color:#212121;text-decoration:none}.ui-state-highlight,.ui-widget-content .ui-state-highlight,.ui-widget-header .ui-state-highlight{border:1px solid #fcefa1;background:#fbf9ee url("https://sagecell.sagemath.org/static/images/ui-bg_glass_55_fbf9ee_1x400.png") 50% 50% repeat-x;color:#363636}.ui-state-checked{border:1px solid #fcefa1;background:#fbf9ee}.ui-state-highlight a,.ui-widget-content .ui-state-highlight a,.ui-widget-header .ui-state-highlight a{color:#363636}.ui-state-error,.ui-widget-content .ui-state-error,.ui-widget-header .ui-state-error{border:1px solid #cd0a0a;background:#fef1ec url("https://sagecell.sagemath.org/static/images/ui-bg_glass_95_fef1ec_1x400.png") 50% 50% repeat-x;color:#cd0a0a}.ui-state-error a,.ui-widget-content .ui-state-error a,.ui-widget-header .ui-state-error a{color:#cd0a0a}.ui-state-error-text,.ui-widget-content .ui-state-error-text,.ui-widget-header .ui-state-error-text{color:#cd0a0a}.ui-priority-primary,.ui-widget-content .ui-priority-primary,.ui-widget-header .ui-priority-primary{font-weight:bold}.ui-priority-secondary,.ui-widget-content .ui-priority-secondary,.ui-widget-header .ui-priority-secondary{opacity:.7;filter:Alpha(Opacity=70);font-weight:normal}.ui-state-disabled,.ui-widget-content .ui-state-disabled,.ui-widget-header .ui-state-disabled{opacity:.35;filter:Alpha(Opacity=35);background-image:none}.ui-state-disabled .ui-icon{filter:Alpha(Opacity=35)}.ui-icon{width:16px;height:16px}.ui-icon,.ui-widget-content .ui-icon{background-image:url("https://sagecell.sagemath.org/static/images/ui-icons_222222_256x240.png")}.ui-widget-header .ui-icon{background-image:url("https://sagecell.sagemath.org/static/images/ui-icons_222222_256x240.png")}.ui-button .ui-icon{background-image:url("https://sagecell.sagemath.org/static/images/ui-icons_888888_256x240.png")}.ui-state-hover .ui-icon,.ui-state-focus .ui-icon,.ui-button:hover .ui-icon,.ui-button:focus .ui-icon,.ui-state-default .ui-icon{background-image:url("https://sagecell.sagemath.org/static/images/ui-icons_454545_256x240.png")}.ui-state-active .ui-icon,.ui-button:active .ui-icon{background-image:url("https://sagecell.sagemath.org/static/images/ui-icons_454545_256x240.png")}.ui-state-highlight .ui-icon,.ui-button .ui-state-highlight.ui-icon{background-image:url("https://sagecell.sagemath.org/static/images/ui-icons_2e83ff_256x240.png")}.ui-state-error .ui-icon,.ui-state-error-text .ui-icon{background-image:url("https://sagecell.sagemath.org/static/images/ui-icons_cd0a0a_256x240.png")}.ui-icon-blank{background-position:16px 16px}.ui-icon-caret-1-n{background-position:0 0}.ui-icon-caret-1-ne{background-position:-16px 0}.ui-icon-caret-1-e{background-position:-32px 0}.ui-icon-caret-1-se{background-position:-48px 0}.ui-icon-caret-1-s{background-position:-65px 0}.ui-icon-caret-1-sw{background-position:-80px 0}.ui-icon-caret-1-w{background-position:-96px 0}.ui-icon-caret-1-nw{background-position:-112px 0}.ui-icon-caret-2-n-s{background-position:-128px 0}.ui-icon-caret-2-e-w{background-position:-144px 0}.ui-icon-triangle-1-n{background-position:0 -16px}.ui-icon-triangle-1-ne{background-position:-16px -16px}.ui-icon-triangle-1-e{background-position:-32px -16px}.ui-icon-triangle-1-se{background-position:-48px -16px}.ui-icon-triangle-1-s{background-position:-65px -16px}.ui-icon-triangle-1-sw{background-position:-80px -16px}.ui-icon-triangle-1-w{background-position:-96px -16px}.ui-icon-triangle-1-nw{background-position:-112px -16px}.ui-icon-triangle-2-n-s{background-position:-128px -16px}.ui-icon-triangle-2-e-w{background-position:-144px -16px}.ui-icon-arrow-1-n{background-position:0 -32px}.ui-icon-arrow-1-ne{background-position:-16px -32px}.ui-icon-arrow-1-e{background-position:-32px -32px}.ui-icon-arrow-1-se{background-position:-48px -32px}.ui-icon-arrow-1-s{background-position:-65px -32px}.ui-icon-arrow-1-sw{background-position:-80px -32px}.ui-icon-arrow-1-w{background-position:-96px -32px}.ui-icon-arrow-1-nw{background-position:-112px -32px}.ui-icon-arrow-2-n-s{background-position:-128px -32px}.ui-icon-arrow-2-ne-sw{background-position:-144px -32px}.ui-icon-arrow-2-e-w{background-position:-160px -32px}.ui-icon-arrow-2-se-nw{background-position:-176px -32px}.ui-icon-arrowstop-1-n{background-position:-192px -32px}.ui-icon-arrowstop-1-e{background-position:-208px -32px}.ui-icon-arrowstop-1-s{background-position:-224px -32px}.ui-icon-arrowstop-1-w{background-position:-240px -32px}.ui-icon-arrowthick-1-n{background-position:1px -48px}.ui-icon-arrowthick-1-ne{background-position:-16px -48px}.ui-icon-arrowthick-1-e{background-position:-32px -48px}.ui-icon-arrowthick-1-se{background-position:-48px -48px}.ui-icon-arrowthick-1-s{background-position:-64px -48px}.ui-icon-arrowthick-1-sw{background-position:-80px -48px}.ui-icon-arrowthick-1-w{background-position:-96px -48px}.ui-icon-arrowthick-1-nw{background-position:-112px -48px}.ui-icon-arrowthick-2-n-s{background-position:-128px -48px}.ui-icon-arrowthick-2-ne-sw{background-position:-144px -48px}.ui-icon-arrowthick-2-e-w{background-position:-160px -48px}.ui-icon-arrowthick-2-se-nw{background-position:-176px -48px}.ui-icon-arrowthickstop-1-n{background-position:-192px -48px}.ui-icon-arrowthickstop-1-e{background-position:-208px -48px}.ui-icon-arrowthickstop-1-s{background-position:-224px -48px}.ui-icon-arrowthickstop-1-w{background-position:-240px -48px}.ui-icon-arrowreturnthick-1-w{background-position:0 -64px}.ui-icon-arrowreturnthick-1-n{background-position:-16px -64px}.ui-icon-arrowreturnthick-1-e{background-position:-32px -64px}.ui-icon-arrowreturnthick-1-s{background-position:-48px -64px}.ui-icon-arrowreturn-1-w{background-position:-64px -64px}.ui-icon-arrowreturn-1-n{background-position:-80px -64px}.ui-icon-arrowreturn-1-e{background-position:-96px -64px}.ui-icon-arrowreturn-1-s{background-position:-112px -64px}.ui-icon-arrowrefresh-1-w{background-position:-128px -64px}.ui-icon-arrowrefresh-1-n{background-position:-144px -64px}.ui-icon-arrowrefresh-1-e{background-position:-160px -64px}.ui-icon-arrowrefresh-1-s{background-position:-176px -64px}.ui-icon-arrow-4{background-position:0 -80px}.ui-icon-arrow-4-diag{background-position:-16px -80px}.ui-icon-extlink{background-position:-32px -80px}.ui-icon-newwin{background-position:-48px -80px}.ui-icon-refresh{background-position:-64px -80px}.ui-icon-shuffle{background-position:-80px -80px}.ui-icon-transfer-e-w{background-position:-96px -80px}.ui-icon-transferthick-e-w{background-position:-112px -80px}.ui-icon-folder-collapsed{background-position:0 -96px}.ui-icon-folder-open{background-position:-16px -96px}.ui-icon-document{background-position:-32px -96px}.ui-icon-document-b{background-position:-48px -96px}.ui-icon-note{background-position:-64px -96px}.ui-icon-mail-closed{background-position:-80px -96px}.ui-icon-mail-open{background-position:-96px -96px}.ui-icon-suitcase{background-position:-112px -96px}.ui-icon-comment{background-position:-128px -96px}.ui-icon-person{background-position:-144px -96px}.ui-icon-print{background-position:-160px -96px}.ui-icon-trash{background-position:-176px -96px}.ui-icon-locked{background-position:-192px -96px}.ui-icon-unlocked{background-position:-208px -96px}.ui-icon-bookmark{background-position:-224px -96px}.ui-icon-tag{background-position:-240px -96px}.ui-icon-home{background-position:0 -112px}.ui-icon-flag{background-position:-16px -112px}.ui-icon-calendar{background-position:-32px -112px}.ui-icon-cart{background-position:-48px -112px}.ui-icon-pencil{background-position:-64px -112px}.ui-icon-clock{background-position:-80px -112px}.ui-icon-disk{background-position:-96px -112px}.ui-icon-calculator{background-position:-112px -112px}.ui-icon-zoomin{background-position:-128px -112px}.ui-icon-zoomout{background-position:-144px -112px}.ui-icon-search{background-position:-160px -112px}.ui-icon-wrench{background-position:-176px -112px}.ui-icon-gear{background-position:-192px -112px}.ui-icon-heart{background-position:-208px -112px}.ui-icon-star{background-position:-224px -112px}.ui-icon-link{background-position:-240px -112px}.ui-icon-cancel{background-position:0 -128px}.ui-icon-plus{background-position:-16px -128px}.ui-icon-plusthick{background-position:-32px -128px}.ui-icon-minus{background-position:-48px -128px}.ui-icon-minusthick{background-position:-64px -128px}.ui-icon-close{background-position:-80px -128px}.ui-icon-closethick{background-position:-96px -128px}.ui-icon-key{background-position:-112px -128px}.ui-icon-lightbulb{background-position:-128px -128px}.ui-icon-scissors{background-position:-144px -128px}.ui-icon-clipboard{background-position:-160px -128px}.ui-icon-copy{background-position:-176px -128px}.ui-icon-contact{background-position:-192px -128px}.ui-icon-image{background-position:-208px -128px}.ui-icon-video{background-position:-224px -128px}.ui-icon-script{background-position:-240px -128px}.ui-icon-alert{background-position:0 -144px}.ui-icon-info{background-position:-16px -144px}.ui-icon-notice{background-position:-32px -144px}.ui-icon-help{background-position:-48px -144px}.ui-icon-check{background-position:-64px -144px}.ui-icon-bullet{background-position:-80px -144px}.ui-icon-radio-on{background-position:-96px -144px}.ui-icon-radio-off{background-position:-112px -144px}.ui-icon-pin-w{background-position:-128px -144px}.ui-icon-pin-s{background-position:-144px -144px}.ui-icon-play{background-position:0 -160px}.ui-icon-pause{background-position:-16px -160px}.ui-icon-seek-next{background-position:-32px -160px}.ui-icon-seek-prev{background-position:-48px -160px}.ui-icon-seek-end{background-position:-64px -160px}.ui-icon-seek-start{background-position:-80px -160px}.ui-icon-seek-first{background-position:-80px -160px}.ui-icon-stop{background-position:-96px -160px}.ui-icon-eject{background-position:-112px -160px}.ui-icon-volume-off{background-position:-128px -160px}.ui-icon-volume-on{background-position:-144px -160px}.ui-icon-power{background-position:0 -176px}.ui-icon-signal-diag{background-position:-16px -176px}.ui-icon-signal{background-position:-32px -176px}.ui-icon-battery-0{background-position:-48px -176px}.ui-icon-battery-1{background-position:-64px -176px}.ui-icon-battery-2{background-position:-80px -176px}.ui-icon-battery-3{background-position:-96px -176px}.ui-icon-circle-plus{background-position:0 -192px}.ui-icon-circle-minus{background-position:-16px -192px}.ui-icon-circle-close{background-position:-32px -192px}.ui-icon-circle-triangle-e{background-position:-48px -192px}.ui-icon-circle-triangle-s{background-position:-64px -192px}.ui-icon-circle-triangle-w{background-position:-80px -192px}.ui-icon-circle-triangle-n{background-position:-96px -192px}.ui-icon-circle-arrow-e{background-position:-112px -192px}.ui-icon-circle-arrow-s{background-position:-128px -192px}.ui-icon-circle-arrow-w{background-position:-144px -192px}.ui-icon-circle-arrow-n{background-position:-160px -192px}.ui-icon-circle-zoomin{background-position:-176px -192px}.ui-icon-circle-zoomout{background-position:-192px -192px}.ui-icon-circle-check{background-position:-208px -192px}.ui-icon-circlesmall-plus{background-position:0 -208px}.ui-icon-circlesmall-minus{background-position:-16px -208px}.ui-icon-circlesmall-close{background-position:-32px -208px}.ui-icon-squaresmall-plus{background-position:-48px -208px}.ui-icon-squaresmall-minus{background-position:-64px -208px}.ui-icon-squaresmall-close{background-position:-80px -208px}.ui-icon-grip-dotted-vertical{background-position:0 -224px}.ui-icon-grip-dotted-horizontal{background-position:-16px -224px}.ui-icon-grip-solid-vertical{background-position:-32px -224px}.ui-icon-grip-solid-horizontal{background-position:-48px -224px}.ui-icon-gripsmall-diagonal-se{background-position:-64px -224px}.ui-icon-grip-diagonal-se{background-position:-80px -224px}.ui-corner-all,.ui-corner-top,.ui-corner-left,.ui-corner-tl{border-top-left-radius:4px}.ui-corner-all,.ui-corner-top,.ui-corner-right,.ui-corner-tr{border-top-right-radius:4px}.ui-corner-all,.ui-corner-bottom,.ui-corner-left,.ui-corner-bl{border-bottom-left-radius:4px}.ui-corner-all,.ui-corner-bottom,.ui-corner-right,.ui-corner-br{border-bottom-right-radius:4px}.ui-widget-overlay{background:#aaa;opacity:.3;filter:Alpha(Opacity=30)}.ui-widget-shadow{-webkit-box-shadow:-8px -8px 8px #aaa;box-shadow:-8px -8px 8px #aaa}
+
+.colorpicker {
+	width: 356px;
+	height: 176px;
+	overflow: hidden;
+	position: absolute;
+	background: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_background.png);
+	font-family: Arial, Helvetica, sans-serif;
+	display: none;
+}
+.colorpicker_color {
+	width: 150px;
+	height: 150px;
+	left: 14px;
+	top: 13px;
+	position: absolute;
+	background: #f00;
+	overflow: hidden;
+	cursor: crosshair;
+}
+.colorpicker_color div {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 150px;
+	height: 150px;
+	background: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_overlay.png);
+}
+.colorpicker_color div div {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 11px;
+	height: 11px;
+	overflow: hidden;
+	background: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_select.gif);
+	margin: -5px 0 0 -5px;
+}
+.colorpicker_hue {
+	position: absolute;
+	top: 13px;
+	left: 171px;
+	width: 35px;
+	height: 150px;
+	cursor: n-resize;
+}
+.colorpicker_hue div {
+	position: absolute;
+	width: 35px;
+	height: 9px;
+	overflow: hidden;
+	background: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_indic.gif) left top;
+	margin: -4px 0 0 0;
+	left: 0px;
+}
+.colorpicker_new_color {
+	position: absolute;
+	width: 60px;
+	height: 30px;
+	left: 213px;
+	top: 13px;
+	background: #f00;
+}
+.colorpicker_current_color {
+	position: absolute;
+	width: 60px;
+	height: 30px;
+	left: 283px;
+	top: 13px;
+	background: #f00;
+}
+.colorpicker input {
+	background-color: transparent;
+	border: 1px solid transparent;
+	position: absolute;
+	font-size: 10px;
+	font-family: Arial, Helvetica, sans-serif;
+	color: #898989;
+	top: 4px;
+	right: 11px;
+	text-align: right;
+	margin: 0;
+	padding: 0;
+	height: 11px;
+}
+.colorpicker_hex {
+	position: absolute;
+	width: 72px;
+	height: 22px;
+	background: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_hex.png) top;
+	left: 212px;
+	top: 142px;
+}
+.colorpicker_hex input {
+	right: 6px;
+}
+.colorpicker_field {
+	height: 22px;
+	width: 62px;
+	background-position: top;
+	position: absolute;
+}
+.colorpicker_field span {
+	position: absolute;
+	width: 12px;
+	height: 22px;
+	overflow: hidden;
+	top: 0;
+	right: 0;
+	cursor: n-resize;
+}
+.colorpicker_rgb_r {
+	background-image: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_rgb_r.png);
+	top: 52px;
+	left: 212px;
+}
+.colorpicker_rgb_g {
+	background-image: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_rgb_g.png);
+	top: 82px;
+	left: 212px;
+}
+.colorpicker_rgb_b {
+	background-image: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_rgb_b.png);
+	top: 112px;
+	left: 212px;
+}
+.colorpicker_hsb_h {
+	background-image: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_hsb_h.png);
+	top: 52px;
+	left: 282px;
+}
+.colorpicker_hsb_s {
+	background-image: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_hsb_s.png);
+	top: 82px;
+	left: 282px;
+}
+.colorpicker_hsb_b {
+	background-image: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_hsb_b.png);
+	top: 112px;
+	left: 282px;
+}
+.colorpicker_submit {
+	position: absolute;
+	width: 22px;
+	height: 22px;
+	background: url(https://sagecell.sagemath.org/static/colorpicker/images/colorpicker_submit.png) top;
+	left: 322px;
+	top: 142px;
+	overflow: hidden;
+}
+.colorpicker_focus {
+	background-position: center;
+}
+.colorpicker_hex.colorpicker_focus {
+	background-position: bottom;
+}
+.colorpicker_submit.colorpicker_focus {
+	background-position: bottom;
+}
+.colorpicker_slider {
+	background-position: bottom;
+}
+
+
+/*!
+ *  Font Awesome 3.0.2
+ *  the iconic font designed for use with Twitter Bootstrap
+ *  -------------------------------------------------------
+ *  The full suite of pictographic icons, examples, and documentation
+ *  can be found at: http://fortawesome.github.com/Font-Awesome/
+ *
+ *  License
+ *  -------------------------------------------------------
+ *  - The Font Awesome font is licensed under the SIL Open Font License - http://scripts.sil.org/OFL
+ *  - Font Awesome CSS, LESS, and SASS files are licensed under the MIT License -
+ *    http://opensource.org/licenses/mit-license.html
+ *  - The Font Awesome pictograms are licensed under the CC BY 3.0 License - http://creativecommons.org/licenses/by/3.0/
+ *  - Attribution is no longer required in Font Awesome 3.0, but much appreciated:
+ *    "Font Awesome by Dave Gandy - http://fortawesome.github.com/Font-Awesome"
+
+ *  Contact
+ *  -------------------------------------------------------
+ *  Email: dave@davegandy.com
+ *  Twitter: http://twitter.com/fortaweso_me
+ *  Work: Lead Product Designer @ http://kyruus.com
+ */
+@font-face {
+  font-family: 'FontAwesomeSagecell';
+  src: url('https://sagecell.sagemath.org/static/fontawesome-webfont.eot?v=3.0.1');
+  src: url('https://sagecell.sagemath.org/static/fontawesome-webfont.eot?#iefix&v=3.0.1') format('embedded-opentype'),
+    url('https://sagecell.sagemath.org/static/fontawesome-webfont.woff?v=3.0.1') format('woff'),
+    url('https://sagecell.sagemath.org/static/fontawesome-webfont.ttf?v=3.0.1') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+/*  Font Awesome styles
+    ------------------------------------------------------- */
+.sagecell [class^="sagecell_icon-"],
+.sagecell [class*=" sagecell_icon-"] {
+  font-family: FontAwesomeSagecell;
+  font-weight: normal;
+  font-style: normal;
+  text-decoration: inherit;
+  -webkit-font-smoothing: antialiased;
+
+  font-size: 125%;
+  background: transparent;
+  /* sprites.less reset */
+  display: inline;
+  width: auto;
+  height: auto;
+  line-height: normal;
+  vertical-align: baseline;
+  margin-top: 0;
+}
+.sagecell [class^="sagecell_icon-"]:before,
+.sagecell [class*=" sagecell_icon-"]:before {
+  text-decoration: inherit;
+  display: inline-block;
+  speak: none;
+}
+.sagecell .sagecell_icon-resize-full:before		{ content: "\f021"; }
+.sagecell .sagecell_icon-resize-small:before		{ content: "\f022"; }
+
+
+.sagecell_messages div {
+    margin-bottom: 12pt;
+}
+
+.sagecell_sliderControl {
+    max-width: 40em;
+    margin-right: 1.0em;
+    margin-left: 0.5em;
+}
+
+.sagecell_multiSliderContainer {
+    margin-left: 1.0em;
+    whitespace: nowrap;
+}
+
+.sagecell_multiSliderControl {
+    display: inline-block;
+    margin-right: 0.5em;
+    margin-left: 0.5em;
+    margin-top: 0.25em;
+}
+
+.sagecell_colorSelector {
+    display: inline-block;
+    width: 2em;
+    height: 2em;
+    border: 2px solid gray;
+    border-radius: 3px;
+    padding: 1px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.sagecell .error, .sagecell .stderr {
+    color: red;
+}
+
+.sagecell .colorpicker {
+    z-index: 10;
+}
+
+.sagecell .CodeMirror {
+    border: 1px solid;
+    height: auto;
+}
+
+.sagecell .CodeMirror-scroll {
+    min-height: 3em;
+    max-height: 14em;
+}
+
+.sagecell .CodeMirror-fullscreen .CodeMirror-scroll {
+    max-height: none;
+}
+
+.sagecell .CodeMirror-hints {
+    padding-right: 10px;
+}
+
+.sagecell .ui-dialog-content {
+    font-size: 80%;
+}
+
+.sagecell_input {
+    overflow: hidden;
+    padding-right: 2px;
+}
+
+.sagecell button.sagecell_evalButton {
+    cursor: default;
+}
+
+.sagecell_output {
+    padding-right: 2px;
+}
+
+.sagecell_output_elements {
+    margin-top: 0.5em;
+}
+
+.sagecell_permalink {
+    padding-right: 5px;
+    text-align: right;
+    position: relative;
+}
+
+.sagecell_permalink_result {
+    position: absolute;
+    padding-right: 5px;
+    text-align: right;
+    right: 3px;
+    z-index: 100;
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 3px;
+    padding: 5px;
+}
+
+.sagecell_permalink_result a:not([href]) {
+    color: gray;
+    text-decoration: none;
+    cursor: default;
+}
+
+.sagecell_permalink_result img {
+    display: inline-block;
+    background-color: lightgray;
+    width: 200px;
+    height: 200px;
+}
+
+.sagecell_sessionContainer {
+    position: relative;
+}
+
+.sagecell_sessionContainer:after {
+    display: table;
+    content: " ";
+    clear: both;
+}
+
+.sagecell_sessionOutput {
+    position: relative;
+    border: 2px solid;
+    padding: 5px;
+    margin-top: 2px;
+    min-height: 16px;
+    overflow-x: auto;
+}
+
+.sagecell_sessionOutput pre {
+    margin: 0px;
+}
+
+.sagecell_sessionOutput.sagecell_active {
+    border-color: #080;
+}
+
+.sagecell_poweredBy {
+    float: right;
+    padding: 3px 5px 5px 0px;
+    text-align: right;
+    overflow: visible;
+    font-size: 80%;
+}
+
+.sagecell_poweredBy img {
+    vertical-align: -5px;
+    border-style: none;
+    text-decoration: none;
+}
+
+.sagecell_spinner {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+}
+
+.sagecell_sessionFiles {
+    width: 80%;
+    padding-bottom: 1.0em;
+}
+
+.sagecell_interactContainer {
+    position: relative;
+    padding: 15px 5px 5px 5px;
+    border: 2px solid lightgray;
+    margin-bottom: 2px;
+}
+
+.sagecell_bookmarks {
+    cursor: default;
+}
+
+.sagecell_interactContainer .sagecell_bookmarks {
+    position: absolute;
+    right: 3px;
+    top: 3px;
+}
+
+.sagecell_bookmarks div {
+    display: inline-block;
+    height: 1.5em;
+    vertical-align: bottom;
+    overflow-y: hidden;
+    font-size: 1.3em;
+    font-family: Arial;
+    color: #8c8c8c;
+    transition: color 0.25s ease-out;
+}
+
+.sagecell_bookmarks div:first-child {
+    color: transparent;
+    visibility: hidden;
+}
+
+.sagecell_bookmarks div:last-child {
+    margin-left: 10px;
+    width: 1.5em;
+}
+
+.sagecell_bookmarks div:last-child:before {
+    display: inline-block;
+    content: "\2605";
+}
+
+.sagecell_bookmarks div.sagecell_export {
+    visibility: visible;
+    transition: color 0.5s 0.5s;
+    color: inherit;
+    cursor: pointer;
+}
+
+.sagecell_export:before {
+    content: "\22ef";
+}
+
+.sagecell_bookmarks input {
+    border: 1px solid black;
+    border-radius: 3px;
+    vertical-align: 50%;
+    background-color: rgba(0, 0, 0, 0.1);
+    font-family: monospace;
+}
+
+.sagecell_sessionOutput.sagecell_active .sagecell_bookmarks div:last-child:hover {
+    color: #ffa500;
+    cursor: pointer;
+}
+
+.sagecell_bookmarks_list.ui-menu {
+    display: inline-block;
+    min-width: 15em;
+    cursor: default;
+    z-index: 99;
+}
+
+.sagecell_bookmarks_list.ui-menu li.ui-state-disabled {
+    opacity: 1;
+    margin: 0px;
+}
+
+.sagecell_bookmarks_list > li > a > input,
+.sagecell_bookmarks_list > li > a > div:first-child {
+    display: inline-block;
+    width: 85%;
+    border: none;
+    border-radius: 3px;
+}
+
+.sagecell_bookmarks_list > li > a > div:last-child {
+    float: right;
+    width: 1.5em;
+    text-align: center;
+    font-weight: bold;
+    color: #777;
+    cursor: pointer;
+    transition: 0.25s color;
+}
+
+.sagecell_bookmarks_list > li:not(:last-child):not(:hover) > a > div:last-child {
+     display: none;
+}
+
+.sagecell_bookmarks_list > li > a > div:last-child:hover {
+    color: darkred;
+}
+
+.sagecell_bookmarks_list > li > a > div:last-child:before {
+    content: "\2716";
+}
+
+.sagecell_bookmarks_list > li:last-child > a > div:hover {
+    color: darkblue;
+}
+
+.sagecell_bookmarks_list > li:last-child > a > div:before {
+    content: "+";
+}
+
+.sagecell_interactOutput {
+    padding: 10px;
+    padding-right: 2em;
+    padding-left: 2em;
+    overflow-x: auto;
+    vertical-align: top;
+}
+
+.sagecell_interactValueBox {
+    border: 1px solid transparent;
+    background-color: transparent;
+    vertical-align: baseline;
+    font-family: monospace;  /* Required since dynamic input box size is determined by monospaced fonts */
+    max-width: 10ex;
+}
+
+.sagecell_interactValueBox:hover {
+    border-color: lightgray;
+}
+
+.sagecell_interactValueBox:focus {
+    border-color: gray;
+}
+
+.sagecell_interactControlCell {
+    display: inline-table;
+    vertical-align: top;
+    min-width: 200px;
+}
+
+.sagecell_interactControlLabel {
+    display: table-cell;
+    text-align: right !important;
+    vertical-align: middle !important;
+    padding-right: 0.5ex !important;
+    padding-top: 0.6ex !important;
+    padding-bottom: 0.6ex !important;
+    min-width: 10ex;
+    overflow-wrap: break-word;
+}
+
+.sagecell_interactControl {
+    display: table-cell;
+    width: 100%;
+    height: 100%;
+    vertical-align: middle;
+}
+
+.sagecell_interactContainer .sagecell_interactControl {
+    /* only pad if we are setting up the layout.  If we have an inline control
+       don't pad, but leave it up to the user */
+    padding: 1ex;
+}
+
+.sagecell_sliderContainer {
+    display: table;
+    width: 100%;
+    height: 100%;
+    max-width: 700px;
+    min-width: 200px;
+}
+
+.sagecell_sliderContainer > div:first-child {
+    display: table-cell;
+    width: 100%;
+    vertical-align: middle;
+}
+
+.sagecell_sliderContainer > div:first-child + div {
+    display: table-cell;
+    min-width: 11ex;
+}
+
+.sagecell_interactTextbox[size="0"] {
+    width: 100%;
+    max-width: 40em;
+}
+
+.sagecell_dirtyControl {
+    box-shadow: 0px 0px 2px 1px #c00;
+    transition: box-shadow 1s;
+    border-radius: 2px;
+}
+
+.sagecell_commands, .sagecell .ui-widget .sagecell_commands {
+    width: 100%;
+    height: 200px;
+    border: 1px solid;
+    font-family: monospace;
+    font-size: 10pt;
+}
+
+.sagecell_editor {
+    margin-bottom: 8px;
+}
+
+.sagecell_options {
+    display: inline-block;
+    margin-right: 2px;
+    float: right;
+    text-align: right;
+    font-size: 80%;
+}
+
+.sagecell_fullScreen {
+    position: absolute;
+    right: 1.5em;
+    top: 0.5em;
+    z-index: 10;
+    padding: 2px;
+    color: rgb(128,128,128);
+}
+
+.sagecell_editor div.ui-accordion-content.ui-helper-reset {
+    padding: 1em 0.5em;
+    font-size: 90.9%;
+}
+
+.sagecell_advancedFrame {
+    border-radius: 5px;
+    background-color: #ddf;
+    border: 1px solid;
+    padding: 0.2em;
+    display: inline-block;
+    width: 300px;
+    overflow: hidden;
+    margin-left: 3em;
+    margin-bottom: 1em;
+    vertical-align: top;
+}
+
+.sagecell_advancedTitle {
+    cursor: default;
+}
+
+.sagecell_advancedFields {
+    border: 1px solid gray;
+    background-color: white;
+    padding: 5px;
+}
+
+.sagecell_fileList li {
+    list-style: none;
+    position: relative;
+}
+
+.sagecell_fileName {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+    width: 230px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sagecell_deleteButton {
+    position: absolute;
+    left: -1.2em;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.sagecell_deleteButton:hover {
+    color: red;
+}
+
+.sagecell_deleteButton:active {
+    color: darkred;
+}
+
+.sagecell_deleteButton:before {
+    content: "\2716";
+}
+
+.sagecell table.table_form tr.row-a {
+    background-color: #f8f8f8;
+}
+
+.sagecell table.table_form tr.row-b {
+    background-color: #efefef;
+}
+
+.sagecell table.table_form td {
+    padding: 5px 15px;
+    color: #00a;
+}
+
+.sagecell .sagecell-templates .hide {
+ display: none;   
+}
+
+.sagecell .sagecell-templates .pull-right {
+    float: right;
+}
+
+.sagecell .sagecell-templates .lighten {
+    color: gray;
+}
+
+/* These colors are constructed in
+ * notebook/static/notebook/less/ansicolors.less
+ * but were copied from
+ * notebook/static/style/ipython.min.css
+ * and processed in Python via
+ * replace("{\n  ", "{").replace("\n}", "}").replace("\n.","\n.sagecell .")
+ */
+.sagecell .ansi-black-fg {color: #3E424D;}
+.sagecell .ansi-black-bg {background-color: #3E424D;}
+.sagecell .ansi-black-intense-fg {color: #282C36;}
+.sagecell .ansi-black-intense-bg {background-color: #282C36;}
+.sagecell .ansi-red-fg {color: #E75C58;}
+.sagecell .ansi-red-bg {background-color: #E75C58;}
+.sagecell .ansi-red-intense-fg {color: #B22B31;}
+.sagecell .ansi-red-intense-bg {background-color: #B22B31;}
+.sagecell .ansi-green-fg {color: #00A250;}
+.sagecell .ansi-green-bg {background-color: #00A250;}
+.sagecell .ansi-green-intense-fg {color: #007427;}
+.sagecell .ansi-green-intense-bg {background-color: #007427;}
+.sagecell .ansi-yellow-fg {color: #DDB62B;}
+.sagecell .ansi-yellow-bg {background-color: #DDB62B;}
+.sagecell .ansi-yellow-intense-fg {color: #B27D12;}
+.sagecell .ansi-yellow-intense-bg {background-color: #B27D12;}
+.sagecell .ansi-blue-fg {color: #208FFB;}
+.sagecell .ansi-blue-bg {background-color: #208FFB;}
+.sagecell .ansi-blue-intense-fg {color: #0065CA;}
+.sagecell .ansi-blue-intense-bg {background-color: #0065CA;}
+.sagecell .ansi-magenta-fg {color: #D160C4;}
+.sagecell .ansi-magenta-bg {background-color: #D160C4;}
+.sagecell .ansi-magenta-intense-fg {color: #A03196;}
+.sagecell .ansi-magenta-intense-bg {background-color: #A03196;}
+.sagecell .ansi-cyan-fg {color: #60C6C8;}
+.sagecell .ansi-cyan-bg {background-color: #60C6C8;}
+.sagecell .ansi-cyan-intense-fg {color: #258F8F;}
+.sagecell .ansi-cyan-intense-bg {background-color: #258F8F;}
+.sagecell .ansi-white-fg {color: #C5C1B4;}
+.sagecell .ansi-white-bg {background-color: #C5C1B4;}
+.sagecell .ansi-white-intense-fg {color: #A1A6B2;}
+.sagecell .ansi-white-intense-bg {background-color: #A1A6B2;}
+.sagecell .ansi-default-inverse-fg {color: #FFFFFF;}
+.sagecell .ansi-default-inverse-bg {background-color: #000000;}
+.sagecell .ansi-bold {font-weight: bold;}
+.sagecell .ansi-underline {text-decoration: underline;}
+</style><script type="text/javascript">window.MathJax = {
+        tex: {
+          inlineMath: [["$", "$"], ["\\(", "\\)"]],
+          displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+          processEscapes: true,
+          processEnvironments: true,
+        },
+        options: {
+          renderActions: { /* remove when dropping MathJax2 compatibility */
+            find_script_mathtex: [10, function (doc) {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/);
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+                const text = document.createTextNode('');
+                node.parentNode.replaceChild(text, node);
+                math.start = {node: text, delim: '', n: 0};
+                math.end = {node: text, delim: '', n: 0};
+                doc.math.push(math);
+              }
+            }, '']
+          }
+        }
+    };</script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"></script><script type="text/javascript" async="" src="https://ssl.google-analytics.com/ga.js"></script><script src="https://dahn-research.eu/nbplayer/vendor/js/vendor/es5-shim.min.js"></script>
+        <script src="https://dahn-research.eu/nbplayer/vendor/js/vendor/marked.min.js"></script>
+        <script src="https://dahn-research.eu/nbplayer/vendor/js/vendor/purify.min.js"></script>
+        <script src="https://dahn-research.eu/nbplayer/vendor/js/vendor/ansi_up.min.js"></script>
+        <script src="https://dahn-research.eu/nbplayer/vendor/js/vendor/prism.min.js"></script>
+        <script src="https://dahn-research.eu/nbplayer/vendor/js/vendor/katex.min.js"></script>
+        <script src="https://dahn-research.eu/nbplayer/vendor/js/vendor/katex-auto-render.min.js"></script>
+        <script src="https://dahn-research.eu/nbplayer/vendor/js/vendor/notebook.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://dahn-research.eu/nbplayer/vendor/css/vendor/katex.min.css">
+        <link rel="stylesheet" href="https://dahn-research.eu/nbplayer/vendor/css/vendor/prism.css">
+        <link rel="stylesheet" href="https://dahn-research.eu/nbplayer/vendor/css/notebook.css">
+        <link rel="stylesheet" href="https://dahn-research.eu/nbplayer/vendor/css/nbpreview.css">
+        <link rel="stylesheet" href="https://dahn-research.eu/nbplayer/css/nbplayer.css">
+        <link rel="stylesheet" href="custom.css">
+
+    <style type="text/css">.CtxtMenu_InfoClose {  top:.2em; right:.2em;}
+.CtxtMenu_InfoContent {  overflow:auto; text-align:left; font-size:80%;  padding:.4em .6em; border:1px inset; margin:1em 0px;  max-height:20em; max-width:30em; background-color:#EEEEEE;  white-space:normal;}
+.CtxtMenu_Info.CtxtMenu_MousePost {outline:none;}
+.CtxtMenu_Info {  position:fixed; left:50%; width:auto; text-align:center;  border:3px outset; padding:1em 2em; background-color:#DDDDDD;  color:black;  cursor:default; font-family:message-box; font-size:120%;  font-style:normal; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 15px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius:15px;               /* Safari and Chrome */  -moz-border-radius:15px;                  /* Firefox */  -khtml-border-radius:15px;                /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */  filter:progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color="gray", Positive="true"); /* IE */}
+</style><style type="text/css">.CtxtMenu_MenuClose {  position:absolute;  cursor:pointer;  display:inline-block;  border:2px solid #AAA;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  font-family: "Courier New", Courier;  font-size:24px;  color:#F0F0F0}
+.CtxtMenu_MenuClose span {  display:block; background-color:#AAA; border:1.5px solid;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  line-height:0;  padding:8px 0 6px     /* may need to be browser-specific */}
+.CtxtMenu_MenuClose:hover {  color:white!important;  border:2px solid #CCC!important}
+.CtxtMenu_MenuClose:hover span {  background-color:#CCC!important}
+.CtxtMenu_MenuClose:hover:focus {  outline:none}
+</style><style type="text/css">.CtxtMenu_Menu {  position:absolute;  background-color:white;  color:black;  width:auto; padding:5px 0px;  border:1px solid #CCCCCC; margin:0; cursor:default;  font: menu; text-align:left; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 5px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius: 5px;             /* Safari and Chrome */  -moz-border-radius: 5px;                /* Firefox */  -khtml-border-radius: 5px;              /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */}
+.CtxtMenu_MenuItem {  padding: 1px 2em;  background:transparent;}
+.CtxtMenu_MenuArrow {  position:absolute; right:.5em; padding-top:.25em; color:#666666;  font-family: null; font-size: .75em}
+.CtxtMenu_MenuActive .CtxtMenu_MenuArrow {color:white}
+.CtxtMenu_MenuArrow.CtxtMenu_RTL {left:.5em; right:auto}
+.CtxtMenu_MenuCheck {  position:absolute; left:.7em;  font-family: null}
+.CtxtMenu_MenuCheck.CtxtMenu_RTL { right:.7em; left:auto }
+.CtxtMenu_MenuRadioCheck {  position:absolute; left: .7em;}
+.CtxtMenu_MenuRadioCheck.CtxtMenu_RTL {  right: .7em; left:auto}
+.CtxtMenu_MenuInputBox {  padding-left: 1em; right:.5em; color:#666666;  font-family: null;}
+.CtxtMenu_MenuInputBox.CtxtMenu_RTL {  left: .1em;}
+.CtxtMenu_MenuComboBox {  left:.1em; padding-bottom:.5em;}
+.CtxtMenu_MenuSlider {  left: .1em;}
+.CtxtMenu_SliderValue {  position:absolute; right:.1em; padding-top:.25em; color:#333333;  font-size: .75em}
+.CtxtMenu_SliderBar {  outline: none; background: #d3d3d3}
+.CtxtMenu_MenuLabel {  padding: 1px 2em 3px 1.33em;  font-style:italic}
+.CtxtMenu_MenuRule {  border-top: 1px solid #DDDDDD;  margin: 4px 3px;}
+.CtxtMenu_MenuDisabled {  color:GrayText}
+.CtxtMenu_MenuActive {  background-color: #606872;  color: white;}
+.CtxtMenu_MenuDisabled:focus {  background-color: #E8E8E8}
+.CtxtMenu_MenuLabel:focus {  background-color: #E8E8E8}
+.CtxtMenu_ContextMenu:focus {  outline:none}
+.CtxtMenu_ContextMenu .CtxtMenu_MenuItem:focus {  outline:none}
+.CtxtMenu_SelectionMenu {  position:relative; float:left;  border-bottom: none; -webkit-box-shadow:none; -webkit-border-radius:0px; }
+.CtxtMenu_SelectionItem {  padding-right: 1em;}
+.CtxtMenu_Selection {  right: 40%; width:50%; }
+.CtxtMenu_SelectionBox {  padding: 0em; max-height:20em; max-width: none;  background-color:#FFFFFF;}
+.CtxtMenu_SelectionDivider {  clear: both; border-top: 2px solid #000000;}
+.CtxtMenu_Menu .CtxtMenu_MenuClose {  top:-10px; left:-10px}
+</style><style id="MJX-CHTML-styles">
+mjx-container[jax="CHTML"] {
+  line-height: 0;
+}
+
+mjx-container [space="1"] {
+  margin-left: .111em;
+}
+
+mjx-container [space="2"] {
+  margin-left: .167em;
+}
+
+mjx-container [space="3"] {
+  margin-left: .222em;
+}
+
+mjx-container [space="4"] {
+  margin-left: .278em;
+}
+
+mjx-container [space="5"] {
+  margin-left: .333em;
+}
+
+mjx-container [rspace="1"] {
+  margin-right: .111em;
+}
+
+mjx-container [rspace="2"] {
+  margin-right: .167em;
+}
+
+mjx-container [rspace="3"] {
+  margin-right: .222em;
+}
+
+mjx-container [rspace="4"] {
+  margin-right: .278em;
+}
+
+mjx-container [rspace="5"] {
+  margin-right: .333em;
+}
+
+mjx-container [size="s"] {
+  font-size: 70.7%;
+}
+
+mjx-container [size="ss"] {
+  font-size: 50%;
+}
+
+mjx-container [size="Tn"] {
+  font-size: 60%;
+}
+
+mjx-container [size="sm"] {
+  font-size: 85%;
+}
+
+mjx-container [size="lg"] {
+  font-size: 120%;
+}
+
+mjx-container [size="Lg"] {
+  font-size: 144%;
+}
+
+mjx-container [size="LG"] {
+  font-size: 173%;
+}
+
+mjx-container [size="hg"] {
+  font-size: 207%;
+}
+
+mjx-container [size="HG"] {
+  font-size: 249%;
+}
+
+mjx-container [width="full"] {
+  width: 100%;
+}
+
+mjx-box {
+  display: inline-block;
+}
+
+mjx-block {
+  display: block;
+}
+
+mjx-itable {
+  display: inline-table;
+}
+
+mjx-row {
+  display: table-row;
+}
+
+mjx-row > * {
+  display: table-cell;
+}
+
+mjx-mtext {
+  display: inline-block;
+}
+
+mjx-mstyle {
+  display: inline-block;
+}
+
+mjx-merror {
+  display: inline-block;
+  color: red;
+  background-color: yellow;
+}
+
+mjx-mphantom {
+  visibility: hidden;
+}
+
+_::-webkit-full-page-media, _:future, :root mjx-container {
+  will-change: opacity;
+}
+
+mjx-assistive-mml {
+  position: absolute !important;
+  top: 0px;
+  left: 0px;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 1px 0px 0px 0px !important;
+  border: 0px !important;
+  display: block !important;
+  width: auto !important;
+  overflow: hidden !important;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+mjx-assistive-mml[display="block"] {
+  width: 100% !important;
+}
+
+mjx-c::before {
+  display: block;
+  width: 0;
+}
+
+.MJX-TEX {
+  font-family: MJXZERO, MJXTEX;
+}
+
+.TEX-B {
+  font-family: MJXZERO, MJXTEX-B;
+}
+
+.TEX-I {
+  font-family: MJXZERO, MJXTEX-I;
+}
+
+.TEX-MI {
+  font-family: MJXZERO, MJXTEX-MI;
+}
+
+.TEX-BI {
+  font-family: MJXZERO, MJXTEX-BI;
+}
+
+.TEX-S1 {
+  font-family: MJXZERO, MJXTEX-S1;
+}
+
+.TEX-S2 {
+  font-family: MJXZERO, MJXTEX-S2;
+}
+
+.TEX-S3 {
+  font-family: MJXZERO, MJXTEX-S3;
+}
+
+.TEX-S4 {
+  font-family: MJXZERO, MJXTEX-S4;
+}
+
+.TEX-A {
+  font-family: MJXZERO, MJXTEX-A;
+}
+
+.TEX-C {
+  font-family: MJXZERO, MJXTEX-C;
+}
+
+.TEX-CB {
+  font-family: MJXZERO, MJXTEX-CB;
+}
+
+.TEX-FR {
+  font-family: MJXZERO, MJXTEX-FR;
+}
+
+.TEX-FRB {
+  font-family: MJXZERO, MJXTEX-FRB;
+}
+
+.TEX-SS {
+  font-family: MJXZERO, MJXTEX-SS;
+}
+
+.TEX-SSB {
+  font-family: MJXZERO, MJXTEX-SSB;
+}
+
+.TEX-SSI {
+  font-family: MJXZERO, MJXTEX-SSI;
+}
+
+.TEX-SC {
+  font-family: MJXZERO, MJXTEX-SC;
+}
+
+.TEX-T {
+  font-family: MJXZERO, MJXTEX-T;
+}
+
+.TEX-V {
+  font-family: MJXZERO, MJXTEX-V;
+}
+
+.TEX-VB {
+  font-family: MJXZERO, MJXTEX-VB;
+}
+
+mjx-stretchy-v mjx-c, mjx-stretchy-h mjx-c {
+  font-family: MJXZERO, MJXTEX-S1, MJXTEX-S4, MJXTEX, MJXTEX-A ! important;
+}
+
+@font-face /* 0 */ {
+  font-family: MJXZERO;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Zero.woff") format("woff");
+}
+
+@font-face /* 1 */ {
+  font-family: MJXTEX;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff") format("woff");
+}
+
+@font-face /* 2 */ {
+  font-family: MJXTEX-B;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff") format("woff");
+}
+
+@font-face /* 3 */ {
+  font-family: MJXTEX-I;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff") format("woff");
+}
+
+@font-face /* 4 */ {
+  font-family: MJXTEX-MI;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff") format("woff");
+}
+
+@font-face /* 5 */ {
+  font-family: MJXTEX-BI;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff") format("woff");
+}
+
+@font-face /* 6 */ {
+  font-family: MJXTEX-S1;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff") format("woff");
+}
+
+@font-face /* 7 */ {
+  font-family: MJXTEX-S2;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff") format("woff");
+}
+
+@font-face /* 8 */ {
+  font-family: MJXTEX-S3;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff") format("woff");
+}
+
+@font-face /* 9 */ {
+  font-family: MJXTEX-S4;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff") format("woff");
+}
+
+@font-face /* 10 */ {
+  font-family: MJXTEX-A;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff") format("woff");
+}
+
+@font-face /* 11 */ {
+  font-family: MJXTEX-C;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff") format("woff");
+}
+
+@font-face /* 12 */ {
+  font-family: MJXTEX-CB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff") format("woff");
+}
+
+@font-face /* 13 */ {
+  font-family: MJXTEX-FR;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff") format("woff");
+}
+
+@font-face /* 14 */ {
+  font-family: MJXTEX-FRB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff") format("woff");
+}
+
+@font-face /* 15 */ {
+  font-family: MJXTEX-SS;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff") format("woff");
+}
+
+@font-face /* 16 */ {
+  font-family: MJXTEX-SSB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff") format("woff");
+}
+
+@font-face /* 17 */ {
+  font-family: MJXTEX-SSI;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff") format("woff");
+}
+
+@font-face /* 18 */ {
+  font-family: MJXTEX-SC;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff") format("woff");
+}
+
+@font-face /* 19 */ {
+  font-family: MJXTEX-T;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff") format("woff");
+}
+
+@font-face /* 20 */ {
+  font-family: MJXTEX-V;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff") format("woff");
+}
+
+@font-face /* 21 */ {
+  font-family: MJXTEX-VB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff") format("woff");
+}
+</style><style type="text/css">.output_111488fc8468495b90c4bc0f3933fe73 .sagecell_messages, .output_111488fc8468495b90c4bc0f3933fe73 .sagecell_permalink {display: none;}</style><style type="text/css">.output_f8ddc9e53a324874857ceddd3532e360 .sagecell_messages, .output_f8ddc9e53a324874857ceddd3532e360 .sagecell_permalink {display: none;}</style><style type="text/css">.output_744fa016a8df48419e4ce089c55ee05d .sagecell_messages, .output_744fa016a8df48419e4ce089c55ee05d .sagecell_permalink {display: none;}</style><style type="text/css">.output_a3c8b169174b4daf88b8fc38b8e0f97b .sagecell_messages, .output_a3c8b169174b4daf88b8fc38b8e0f97b .sagecell_permalink {display: none;}</style><style type="text/css">.output_e2578228d19043fdac738455fa1ca8a9 .sagecell_messages, .output_e2578228d19043fdac738455fa1ca8a9 .sagecell_permalink {display: none;}</style><style type="text/css">.output_fd251b67dbd142df83b462c27a9cae1c .sagecell_messages, .output_fd251b67dbd142df83b462c27a9cae1c .sagecell_permalink {display: none;}</style><style type="text/css">.output_93b9ec3b5b654f3b83f03f3c6644468c .sagecell_messages, .output_93b9ec3b5b654f3b83f03f3c6644468c .sagecell_permalink {display: none;}</style></head>
+<body>
+<div id="main">
+            
+            
+            
+            <div id="notebook-holder"><div class="nb-notebook"><div class="nb-worksheet"><div class="nb-cell nb-markdown-cell"><p>We have data <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo separator="true">,</mo><msub><mi>x</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">x_1, ..., x_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.166667em;"></span><span class="mord">.</span><span class="mord">.</span><span class="mord">.</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.166667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.151392em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">y_1,...,y_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: -0.03588em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.166667em;"></span><span class="mord">.</span><span class="mord">.</span><span class="mord">.</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.166667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.151392em;"><span class="" style="top: -2.55em; margin-left: -0.03588em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> where <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.58056em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is a day of the month in April and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">y_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: -0.03588em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is the high temperature in Richmond that day. We are going to fit a piecewise linear model to this data, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></span>. We are going to implement <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">Djikstra’s</mtext><mtext>&nbsp;</mtext><mtext mathvariant="bold">shortest</mtext><mtext>&nbsp;</mtext><mtext mathvariant="bold">path</mtext><mtext>&nbsp;</mtext><mtext mathvariant="bold">algorithm</mtext></mrow><annotation encoding="application/x-tex">\textbf{Djikstra's shortest path algorithm}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.88888em; vertical-align: -0.19444em;"></span><span class="mord text"><span class="mord textbf">Djikstra’s&nbsp;shortest&nbsp;path&nbsp;algorithm</span></span></span></span></span></span> to minimize cost of our piece-wise linear fit to some data.</p>
+<p>We have a fixed cost for a line segment <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.0037em;">α</span></span></span></span></span>, and the cost for missing a data point is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.88888em; vertical-align: -0.19444em;"></span><span class="mord mathnormal" style="margin-right: 0.05278em;">β</span></span></span></span></span> multiplied by the squared error <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><mi>f</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">)</mo><msup><mo stretchy="false">)</mo><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\beta (y_i - f(x_i))^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.05278em;">β</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: -0.03588em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.222222em;"></span></span><span class="base"><span class="strut" style="height: 1.06411em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.10764em;">f</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.814108em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span>. The cost of our model is the number of line segments, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal">n</span></span></span></span></span>, multiplied by the cost of the line segments, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.0037em;">α</span></span></span></span></span>, plus the sum of squared errors <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup><mo stretchy="false">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><mi>f</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\sum_{i=1}^n (y_i - f(x_i))</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.104em; vertical-align: -0.29971em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position: relative; top: -5e-06em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.804292em;"><span class="" style="top: -2.40029em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span class="" style="top: -3.2029em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.29971em;"><span class=""></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: -0.03588em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.222222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.10764em;">f</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mclose">)</span></span></span></span></span> times the cost of error <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.88888em; vertical-align: -0.19444em;"></span><span class="mord mathnormal" style="margin-right: 0.05278em;">β</span></span></span></span></span>. Therefore, the total cost <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.68333em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.07153em;">C</span></span></span></span></span> is:
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>C</mi><mo>=</mo><mi>n</mi><mi>α</mi><mo>+</mo><mi>β</mi><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mo stretchy="false">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><mi>f</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">C = n \alpha + \beta \sum_{i=1}^n (y_i - f(x_i)).</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.68333em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.07153em;">C</span><span class="mspace" style="margin-right: 0.277778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.277778em;"></span></span><span class="base"><span class="strut" style="height: 0.66666em; vertical-align: -0.08333em;"></span><span class="mord mathnormal">n</span><span class="mord mathnormal" style="margin-right: 0.0037em;">α</span><span class="mspace" style="margin-right: 0.222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.222222em;"></span></span><span class="base"><span class="strut" style="height: 2.92907em; vertical-align: -1.27767em;"></span><span class="mord mathnormal" style="margin-right: 0.05278em;">β</span><span class="mspace" style="margin-right: 0.166667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.6514em;"><span class="" style="top: -1.87233em; margin-left: 0em;"><span class="pstrut" style="height: 3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span class="" style="top: -3.05001em;"><span class="pstrut" style="height: 3.05em;"></span><span class=""><span class="mop op-symbol large-op">∑</span></span></span><span class="" style="top: -4.30001em; margin-left: 0em;"><span class="pstrut" style="height: 3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 1.27767em;"><span class=""></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: -0.03588em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.222222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.10764em;">f</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></span></p>
+<p>We are going to connect data points with linear functions, making sure we go through the first and last data point, and determine which path costs the least.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="1" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage">import math</code></pre></div>
+  <div class="compute sagecell output_111488fc8468495b90c4bc0f3933fe73" style="display: none;">
+
+<div class="sagecell-templates hide"></div>
+<div class="sagecell_output_elements" style="">
+    
+    <div class="sagecell_messages">
+        <hr>
+        <span style="font-size: large; font-weight: bold">Messages</span>
+        <br><br>
+    </div>
+</div></div>
+  <div class="compute" style="display: none;">
+    <script type="text/x-sage">import math
+</script>
+  </div></div><div class="nb-cell nb-markdown-cell"><p>Below are two examples of possible models. We meet the criteria: </p>
+<ol>
+<li><p>Our piecewise linear functions go through <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">p_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>7</mn></msub></mrow><annotation encoding="application/x-tex">p_7</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">7</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></p>
+</li>
+<li><p>The line segments connect two data points together.</p>
+</li>
+</ol>
+<p>The model displayed in red accrues cost by having one line segment and by missing the data points <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>2</mn></msub><mo separator="true">,</mo><msub><mi>p</mi><mn>3</mn></msub><mo separator="true">,</mo><msub><mi>p</mi><mn>4</mn></msub><mo separator="true">,</mo><msub><mi>p</mi><mn>5</mn></msub></mrow><annotation encoding="application/x-tex">p_2, p_3, p_4, p_5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.166667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.166667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.166667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">5</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>, and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>6</mn></msub></mrow><annotation encoding="application/x-tex">p_6</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">6</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>. 
+The model displayed in blue accrues cost by having 3 lines segments, and missing the data points <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>2</mn></msub><mo separator="true">,</mo><msub><mi>p</mi><mn>4</mn></msub></mrow><annotation encoding="application/x-tex">p_2,p_4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.166667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>, and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>5</mn></msub></mrow><annotation encoding="application/x-tex">p_5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">5</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>. </p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="26" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage">x =[6,7,8,9,10,11,12]
+y = [55,56,58,64,69,74,75]
+p = list_plot([(x[i],y[i]) for i in range(7)], color = 'green')
+p2 = list_plot([(x[0+6*i],y[0+6*i]) for i in range(2)], plotjoined=True, color ='red')
+p3 = list_plot([(x[0+2*i],y[0+2*i]) for i in range(4)], plotjoined=True, color ='blue')
+p + p2 + p3</code></pre></div><div class="nb-output" data-prompt-number="26" style="display: none;"><img class="nb-image-output" src="data:image/png;base64,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"></div>
+  <div class="compute sagecell output_f8ddc9e53a324874857ceddd3532e360" style="display: none;">
+
+<div class="sagecell-templates hide"></div>
+<div class="sagecell_output_elements" style="">
+    
+    <div class="sagecell_messages"><div>Accepted: {"data":{"text/plain":null},"metadata":{},"execution_count":1}</div><div>Accepted: {"data":{"text/plain":"text/image-filename file","text/image-filename":"tmp_s8hoy3ng.png?m=1681758932.98483"},"source":"sagecell"}</div>
+        <hr>
+        <span style="font-size: large; font-weight: bold">Messages</span>
+        <br><br>
+    </div>
+</div></div>
+  <div class="compute" style="display: none;">
+    <script type="text/x-sage">x =[6,7,8,9,10,11,12]
+y = [55,56,58,64,69,74,75]
+p = list_plot([(x[i],y[i]) for i in range(7)], color = 'green')
+p2 = list_plot([(x[0+6*i],y[0+6*i]) for i in range(2)], plotjoined=True, color ='red')
+p3 = list_plot([(x[0+2*i],y[0+2*i]) for i in range(4)], plotjoined=True, color ='blue')
+p + p2 + p3
+</script>
+  </div></div><div class="nb-cell nb-markdown-cell"><p>What data points should our model go through to minimize cost? Let's calculate the cost of connecting each data point pair <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">p_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>j</mi></msub></mrow><annotation encoding="application/x-tex">p_j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.716668em; vertical-align: -0.286108em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.286108em;"><span class=""></span></span></span></span></span></span></span></span></span></span>. </p>
+<p>For each of these, there is a fixed cost <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.0037em;">α</span></span></span></span></span> for the line segment, and then a cost for missing the data points in between <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">p_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>j</mi></msub></mrow><annotation encoding="application/x-tex">p_j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.716668em; vertical-align: -0.286108em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.286108em;"><span class=""></span></span></span></span></span></span></span></span></span></span>. We calculate the cost of each of these segments below and put them in a dictionary called <code>lengths</code>, where the key is the points we are connecting, and the value is the cost of the segment. </p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="28" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage">
+alpha = 10;
+beta = 2;
+lengths = {}
+for i in range(len(x)):
+    for j in range(i+1,len(x)):
+        cost = 0
+        if j == i+1:
+            cost = alpha #if you miss no data points (i.e. p_i and p_j are successive  
+                        #data points, the cost is just alpha ()
+        else: 
+            num = j - i - 1
+            slope = (y[i]-y[j])/(x[i]-x[j]) #calculate the slope of the line between points
+            for k in range(num):
+                cost = cost + (y[i+k+1]-(slope*(x[i+k+1] - x[i])+y[i]))^2
+                #add the cost of the squared errors for each data point in between p_i and p_j
+            cost = alpha + beta*cost #combine the cost for the segment and the errors
+        lengths[(i+1,j+1)] = cost #add the cost to the dictionary
+
+# this is the example we did in class if you are curious
+#x = [1,2,3,4]
+#lengths = {}
+#lengths[(1,2)]=10
+#lengths[(2,3)]=10
+#lengths[(3,4)]=10
+#lengths[(1,4)]=20
+#lengths[(2,4)]=7
+#lengths[(1,3)]=5</code></pre></div>
+  <div class="compute sagecell output_744fa016a8df48419e4ce089c55ee05d" style="display: none;">
+
+<div class="sagecell-templates hide"></div>
+<div class="sagecell_output_elements" style="">
+    
+    <div class="sagecell_messages">
+        <hr>
+        <span style="font-size: large; font-weight: bold">Messages</span>
+        <br><br>
+    </div>
+</div></div>
+  <div class="compute" style="display: none;">
+    <script type="text/x-sage">alpha = 10;
+beta = 2;
+lengths = {}
+for i in range(len(x)):
+    for j in range(i+1,len(x)):
+        cost = 0
+        if j == i+1:
+            cost = alpha #if you miss no data points (i.e. p_i and p_j are successive  
+                        #data points, the cost is just alpha ()
+        else: 
+            num = j - i - 1
+            slope = (y[i]-y[j])/(x[i]-x[j]) #calculate the slope of the line between points
+            for k in range(num):
+                cost = cost + (y[i+k+1]-(slope*(x[i+k+1] - x[i])+y[i]))^2
+                #add the cost of the squared errors for each data point in between p_i and p_j
+            cost = alpha + beta*cost #combine the cost for the segment and the errors
+        lengths[(i+1,j+1)] = cost #add the cost to the dictionary
+
+# this is the example we did in class if you are curious
+#x = [1,2,3,4]
+#lengths = {}
+#lengths[(1,2)]=10
+#lengths[(2,3)]=10
+#lengths[(3,4)]=10
+#lengths[(1,4)]=20
+#lengths[(2,4)]=7
+#lengths[(1,3)]=5
+</script>
+  </div></div><div class="nb-cell nb-markdown-cell"><p>Now we can look at the cost of each of these line segments, which we can think about as a length of an edge from <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">p_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> to <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>j</mi></msub></mrow><annotation encoding="application/x-tex">p_j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.716668em; vertical-align: -0.286108em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.286108em;"><span class=""></span></span></span></span></span></span></span></span></span></span> on a graph. We want the shortest path from <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">p_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> to <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>j</mi></msub></mrow><annotation encoding="application/x-tex">p_j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.716668em; vertical-align: -0.286108em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.286108em;"><span class=""></span></span></span></span></span></span></span></span></span></span></p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="29" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage">lengths</code></pre></div><div class="nb-output" data-prompt-number="29" style="display: none;"><pre class="nb-text-output">{(1, 2): 10,
+ (1, 3): 21/2,
+ (1, 4): 36,
+ (1, 5): 59,
+ (1, 6): 412/5,
+ (1, 7): 554/9,
+ (2, 3): 10,
+ (2, 4): 18,
+ (2, 5): 196/9,
+ (2, 6): 25,
+ (2, 7): 188/5,
+ (3, 4): 10,
+ (3, 5): 21/2,
+ (3, 6): 100/9,
+ (3, 7): 199/4,
+ (4, 5): 10,
+ (4, 6): 10,
+ (4, 7): 250/9,
+ (5, 6): 10,
+ (5, 7): 18,
+ (6, 7): 10}</pre></div>
+  <div class="compute sagecell output_a3c8b169174b4daf88b8fc38b8e0f97b" style="display: none;">
+
+<div class="sagecell-templates hide"></div>
+<div class="sagecell_output_elements" style="">
+    
+    <div class="sagecell_messages"><div>Accepted: {"data":{"text/plain":"{(1, 2): 10,\n (1, 3): 21/2,\n (1, 4): 36,\n (1, 5): 59,\n (1, 6): 412/5,\n (1, 7): 554/9,\n (2, 3): 10,\n (2, 4): 18,\n (2, 5): 196/9,\n (2, 6): 25,\n (2, 7): 188/5,\n (3, 4): 10,\n (3, 5): 21/2,\n (3, 6): 100/9,\n (3, 7): 199/4,\n (4, 5): 10,\n (4, 6): 10,\n (4, 7): 250/9,\n (5, 6): 10,\n (5, 7): 18,\n (6, 7): 10}"},"metadata":{},"execution_count":1}</div>
+        <hr>
+        <span style="font-size: large; font-weight: bold">Messages</span>
+        <br><br>
+    </div>
+</div></div>
+  <div class="compute" style="display: none;">
+    <script type="text/x-sage">lengths
+</script>
+  </div></div><div class="nb-cell nb-markdown-cell"><p>Now we are going to use Djikstra's algorithm to find the shortest path from <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">p_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>7</mn></msub></mrow><annotation encoding="application/x-tex">p_7</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">7</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>, thereby minimizing the cost of our line segments. I have chosen weights of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.0037em;">α</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.88888em; vertical-align: -0.19444em;"></span><span class="mord mathnormal" style="margin-right: 0.05278em;">β</span></span></span></span></span> above. You can change <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.0037em;">α</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.88888em; vertical-align: -0.19444em;"></span><span class="mord mathnormal" style="margin-right: 0.05278em;">β</span></span></span></span></span> and see how the minimized path changes. Increasing <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.0037em;">α</span></span></span></span></span> means you care more about simplicity. Increasing <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.88888em; vertical-align: -0.19444em;"></span><span class="mord mathnormal" style="margin-right: 0.05278em;">β</span></span></span></span></span> means you care more about accuracy. </p>
+</div><div class="nb-cell nb-markdown-cell"><p>We have two dictionaries, one for the temporary labels (<code>tlabels</code>) and one for the permanent labels (<code>plabels</code>). </p>
+<p>Step 0: We iterate through all the temporary vertices, label the start vertex with 0 and label the rest of the vertices with infinity. </p>
+<p>While the temporary dictionary is not empty, we repeat Step 1 and 2:</p>
+<p>Step 1: Find the minimum temporary vertex, and move it to the permanent list. Delete this vertex from the temporary list</p>
+<p>Step 2: For each temporary vertex, find the permanent vertices that are adjacent to it. For each of these permanent vertices, find the value of the permanent label + the length of the edge connecting the temporary vertex to the permanent label. Replace the label of the temporary vertex with the minimum of these values. 
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>j</mi><mo stretchy="false">)</mo><mo>=</mo><munder><mo><mi>min</mi><mo>⁡</mo></mo><mi>i</mi></munder><mo stretchy="false">{</mo><mi>L</mi><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo><mo>+</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">L(j) = \min_{i}{L(i) + c_{ij}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">L</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.05724em;">j</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.277778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.277778em;"></span></span><span class="base"><span class="strut" style="height: 1.47766em; vertical-align: -0.727664em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.66786em;"><span class="" style="top: -2.37234em; margin-left: 0em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class=""><span class="mop">min</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.727664em;"><span class=""></span></span></span></span></span><span class="mopen">{</span><span class="mord mathnormal">L</span><span class="mopen">(</span><span class="mord mathnormal">i</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.222222em;"></span></span><span class="base"><span class="strut" style="height: 1.03611em; vertical-align: -0.286108em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight" style="margin-right: 0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.286108em;"><span class=""></span></span></span></span></span></span><span class="mclose">}</span></span></span></span></span></span>
+Where <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">L(i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">L</span><span class="mopen">(</span><span class="mord mathnormal">i</span><span class="mclose">)</span></span></span></span></span> is the label for permanent vertex <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.65952em; vertical-align: 0em;"></span><span class="mord mathnormal">i</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">c_{ij}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.716668em; vertical-align: -0.286108em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.311664em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight" style="margin-right: 0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.286108em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is the weight of the edge connecting <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.65952em; vertical-align: 0em;"></span><span class="mord mathnormal">i</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.85396em; vertical-align: -0.19444em;"></span><span class="mord mathnormal" style="margin-right: 0.05724em;">j</span></span></span></span></span>. </p>
+<p>When there are no temporary values left, we return the labels of the permanent values. These are the shortest paths from the starting vertex to each vertex.  </p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="30" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage">tlabels = {}
+plabels = {}
+prev = {}
+temp = [i for i in range(1,len(x)+1)]
+for i in range(len(x)):
+    if i+1 == 1:
+        tlabels[i+1] = 0
+    else:
+        tlabels[i+1] = math.inf
+while len(tlabels) != 0:
+    plabels[min(tlabels, key=tlabels.get)] = tlabels[min(tlabels, key=tlabels.get)]
+    del tlabels[min(tlabels, key=tlabels.get)]
+
+    for i in tlabels:
+        opts = {}
+        for j in range(1,i):
+            if j in plabels:
+                opts[j] = plabels[j]+lengths[(j,i)]
+        tlabels[i] = opts[min(opts,key=opts.get)]
+        prev[i] = min(opts,key=opts.get)
+print(plabels)  
+print(prev)</code></pre></div><div class="nb-output" data-prompt-number="30" style="display: none;"><pre class="nb-stdout">{1: 0, 2: 10, 3: 21/2, 4: 41/2, 5: 21, 6: 389/18, 7: 569/18}
+{2: 1, 3: 1, 4: 3, 5: 3, 6: 3, 7: 6}
+</pre></div>
+  <div class="compute sagecell output_e2578228d19043fdac738455fa1ca8a9" style="display: none;">
+
+<div class="sagecell-templates hide"></div>
+<div class="sagecell_output_elements" style="">
+    
+    <div class="sagecell_messages"><div>Accepted: {"name":"stdout","text":"{1: 0, 2: 10, 3: 21/2, 4: 41/2, 5: 21, 6: 389/18, 7: 569/18}\n{2: 1, 3: 1, 4: 3, 5: 3, 6: 3, 7: 6}\n"}</div>
+        <hr>
+        <span style="font-size: large; font-weight: bold">Messages</span>
+        <br><br>
+    </div>
+</div></div>
+  <div class="compute" style="display: none;">
+    <script type="text/x-sage">tlabels = {}
+plabels = {}
+prev = {}
+temp = [i for i in range(1,len(x)+1)]
+for i in range(len(x)):
+    if i+1 == 1:
+        tlabels[i+1] = 0
+    else:
+        tlabels[i+1] = math.inf
+while len(tlabels) != 0:
+    plabels[min(tlabels, key=tlabels.get)] = tlabels[min(tlabels, key=tlabels.get)]
+    del tlabels[min(tlabels, key=tlabels.get)]
+
+    for i in tlabels:
+        opts = {}
+        for j in range(1,i):
+            if j in plabels:
+                opts[j] = plabels[j]+lengths[(j,i)]
+        tlabels[i] = opts[min(opts,key=opts.get)]
+        prev[i] = min(opts,key=opts.get)
+print(plabels)  
+print(prev)
+</script>
+  </div></div><div class="nb-cell nb-markdown-cell"><p>The shortest path from <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">p_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> to <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>7</mn></msub></mrow><annotation encoding="application/x-tex">p_7</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">7</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is 569/18. The path is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mn>1</mn></msub><mo>−</mo><msub><mi>p</mi><mn>3</mn></msub><mo>−</mo><msub><mi>p</mi><mn>6</mn></msub><mo>−</mo><msub><mi>p</mi><mn>7</mn></msub></mrow><annotation encoding="application/x-tex">p_1-p_3-p_6-p_7</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.77777em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.222222em;"></span></span><span class="base"><span class="strut" style="height: 0.77777em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.222222em;"></span></span><span class="base"><span class="strut" style="height: 0.77777em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">6</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.222222em;"></span></span><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.19444em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.301108em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">7</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>. It is graphed below. This path may change if you change <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.43056em; vertical-align: 0em;"></span><span class="mord mathnormal" style="margin-right: 0.0037em;">α</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.88888em; vertical-align: -0.19444em;"></span><span class="mord mathnormal" style="margin-right: 0.05278em;">β</span></span></span></span></span></p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="33" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage">p = list_plot([(x[i],y[i]) for i in range(7)], color = 'green')
+p2 = list_plot([(x[0],y[0]),(x[2],y[2])], plotjoined=True, color ='blue')
+p3 = list_plot([(x[2],y[2]),(x[5],y[5])], plotjoined=True, color ='blue')
+p4 = list_plot([(x[5],y[5]),(x[6],y[6])], plotjoined=True, color ='blue')
+p + p2 + p3 + p4</code></pre></div><div class="nb-output" data-prompt-number="33" style="display: none;"><img class="nb-image-output" src="data:image/png;base64,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KUk333zzRX2fZywKtD1PnDihXr16af78+fU8WWS60PY8efKktm/frhkzZmj79u164403tHfvXt122211/8VGjJgyZYpxww03WD1G1HrkkUeMdu3aGaWlpVaPEpEGDhxojBo1qtJjgwcPNoYPH27RRJHt5MmTRlxcnLF27dpKj3fu3NmYPn26RVNFJknGn//85/L7paWlRlJSkjF//vzyx06fPm24XC5j6dKlVowYUapuT38FBQWGJGPHjh31PFXkutD2LLN161ZDkrF///46/a6YWWF666231K1bNw0ZMkQJCQnq2rWrli9fbvVYUeHMmTNatWqVRo0aFdQ3P6PCDTfcoHfffVd79+6VJP3973/Xhx9+qFtvvdXiySLTuXPnVFJSossuu6zS440aNdKHH35o0VTRoaCgQIcPH1a/fv3KH3M6nerdu7c2b95s4WRAzbxerxwOR52PKMVMMH355ZdasmSJ0tPTtX79et1///0aP368Vq5cafVoEe/NN9/UsWPHNHLkSKtHiVhTpkzR3XffrauvvlqXXnqpunbtqszMTN19991WjxaRmjZtquuvv16zZ8/WN998o5KSEq1atUqffPKJDh06ZPV4Ee3w4cOSpMTExEqPJyYmlj8H2MXp06c1depUDRs2rM7fLxczX15TWlqqbt26KTs7W5LUtWtX7d69W0uWLNG9995r8XSRbcWKFRowYIBSUlKsHiVirVmzRqtWrdLrr7+ujh07aufOncrMzFRKSopGjBhh9XgR6dVXX9WoUaP0ox/9SHFxcbr22ms1bNgwbd++3erRokLV1WTDMFhhhq2cPXtWd911l0pLS/XSSy/V+f1iZoUpOTlZbre70mMdOnTQgQMHLJooOuzfv1+5ubkaPXq01aNEtMmTJ2vq1Km666671KlTJ91zzz2aMGGC5s2bZ/VoEatdu3batGmTioqKVFhYqK1bt+rs2bNq06aN1aNFtKSkJEmqtpp05MiRaqtOgFXOnj2roUOHqqCgQBs2bKjz6pIUQ8HUq1cv7dmzp9Jje/fuVVpamkUTRYecnBwlJCRo4MCBVo8S0U6ePKlLLqn8n2NcXByXFQiBJk2aKDk5WUePHtX69ev161//2uqRIlqbNm2UlJRU/slYyTyPcdOmTerZs6eFkwGmsljKz89Xbm6uWrRoEZL3jZlDchMmTFDPnj2VnZ2toUOHauvWrVq2bJmWLVtm9WgRq7S0VDk5ORoxYoQaNIiZf5XCYtCgQZo7d65atWqljh07aseOHVq0aJFGjRpl9WgRa/369TIMQ1dddZX27dunyZMn66qrrtJvf/tbq0ezvaKiIu3bt6/8fkFBgXbu3KnmzZurVatWyszMVHZ2ttLT05Wenq7s7Gw1btxYw4YNs3Bq+wq0PX/44QcdOHCg/FpBZf9zn5SUVL6ihwoX2p4pKSm68847tX37dq1du1YlJSXlq6HNmzdXw4YNa/+L6/QZuwjzl7/8xbjmmmsMp9NpXH311cayZcusHimirV+/3pBk7Nmzx+pRIp7P5zMeeeQRo1WrVsZll11mtG3b1pg+fbpRXFxs9WgRa82aNUbbtm2Nhg0bGklJSca4ceOMY8eOWT1WRHjvvfcMSdVuI0aMMAzDvLTAzJkzjaSkJMPpdBo33nijsWvXLmuHtrFA2zMnJ6fG52fOnGnp3HZ1oe1ZdmmGmm7vvfdenX6vwzAMo/a5BQAAEP1i5hwmAACA2iKYAAAAAiCYAAAAAiCYAAAAAiCYAAAAAiCYAAAAAiCYAAAAAiCYAAAAAiCYAAAAAiCYAAAAAiCYAAAAAvhf9jhRGSedvGoAAAAASUVORK5CYII="></div>
+  <div class="compute sagecell output_fd251b67dbd142df83b462c27a9cae1c" style="display: none;">
+
+<div class="sagecell-templates hide"></div>
+<div class="sagecell_output_elements" style="">
+    
+    <div class="sagecell_messages"><div>Accepted: {"data":{"text/plain":null},"metadata":{},"execution_count":1}</div><div>Accepted: {"data":{"text/plain":"text/image-filename file","text/image-filename":"tmp_0duou2r3.png?m=1681758941.545412"},"source":"sagecell"}</div>
+        <hr>
+        <span style="font-size: large; font-weight: bold">Messages</span>
+        <br><br>
+    </div>
+</div></div>
+  <div class="compute" style="display: none;">
+    <script type="text/x-sage">p = list_plot([(x[i],y[i]) for i in range(7)], color = 'green')
+p2 = list_plot([(x[0],y[0]),(x[2],y[2])], plotjoined=True, color ='blue')
+p3 = list_plot([(x[2],y[2]),(x[5],y[5])], plotjoined=True, color ='blue')
+p4 = list_plot([(x[5],y[5]),(x[6],y[6])], plotjoined=True, color ='blue')
+p + p2 + p3 + p4
+</script>
+  </div></div><div class="nb-cell nb-code-cell"><div class="nb-input" style="display: none;"><pre class=" language-sage"><code class=" language-sage" data-language="sage"></code></pre></div>
+  <div class="compute sagecell output_93b9ec3b5b654f3b83f03f3c6644468c" style="display: none;">
+
+<div class="sagecell-templates hide"></div>
+<div class="sagecell_output_elements" style="display: none;">
+    
+    <div class="sagecell_messages">
+        <hr>
+        <span style="font-size: large; font-weight: bold">Messages</span>
+        <br><br>
+    </div>
+</div></div>
+  <div class="compute" style="display: none;">
+    <script type="text/x-sage">
+</script>
+  </div></div></div></div></div>
+
+
+            
+        </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://sagecell.sagemath.org/embedded_sagecell.js"></script>
+  <script src="https://dahn-research.eu/nbplayer/vendor/js/FileSaver.min.js"></script>
+  <script src="https://dahn-research.eu/nbplayer/nbplayerConfig.js"></script>
+  <script src="https://dahn-research.eu/nbplayer/js/nbrunner.min.js"></script>
+  <script>
+    playerConfig={"panes":"ExecRead","lang":"sage","linked":true,"eval":false,"hide":["fullScreen"],"execute":true,"showRead":true,"collapsable":false,"playerPath":"https://dahn-research.eu/nbplayer","name":"Shortest_Path"};
+    playerMode={"showSage":true,"showNotebookInput":true,"showSageInput":true};
+    makeMenu();
+    localize();
+    loadStatus();
+    makeSageCells(playerConfig);
+    launchPlayer();
+  </script>
+  </body></html>
